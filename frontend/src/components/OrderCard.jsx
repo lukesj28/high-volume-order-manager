@@ -63,11 +63,16 @@ export default function OrderCard({ order }) {
               {order.pickupName}
             </span>
           )}
-          {order.sourceApp && (
-            <span className="text-xs text-slate-400 ml-auto flex-shrink-0">
-              {order.sourceApp}
+          <span className="ml-auto flex-shrink-0 flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-slate-300 tabular-nums">
+              {new Date(order.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
-          )}
+            {order.sourceApp && (
+              <span className="text-xs text-slate-500">
+                {order.sourceApp}
+              </span>
+            )}
+          </span>
         </div>
 
         <ul className="space-y-0.5">

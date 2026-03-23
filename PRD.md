@@ -1,13 +1,15 @@
-# Project Requirements Document (PRD): Good Friday High-Volume POS
+# Project Requirements Document (PRD): High-Volume Order Manager
+
+> **Note:** While this system was built for a specific high-volume food service event, the architecture is intentionally domain-agnostic. The menu, station profiles, order states, and display configuration are all runtime data — no domain knowledge is hardcoded. This system is suitable for any high-throughput food service operation with similar operational constraints.
 
 ## 1. Executive Summary & Motivations
-This project is a custom Point of Sale (POS) and order management system built for a fish and chips restaurant. The primary event driving the architecture is Good Friday, which demands an unyielding 10-hour period of high-volume, continuous transactional load. 
+This project is a custom Point of Sale (POS) and order management system built for high-volume, event-driven food service. The primary event driving the architecture is a single-day peak service window that demands an unyielding 10-hour period of continuous transactional load.
 
 **Motivations:**
 * **Zero Downtime:** The system must survive continuous operation under heavy load without locking, crashing, or losing orders.
-* **Non-Technical Usability:** Restaurant staff are not tech-savvy. The application must be accessible via a standard web URL with no manual network configuration required.
-* **Zero-Maintenance Handoff:** The original developer is leaving the role soon. The system must run autonomously on managed cloud infrastructure without requiring a dedicated sysadmin to patch servers or restart crashed instances.
-* **Granular Analytics:** The restaurant requires end-of-day reporting that breaks down composite menu items (e.g., separating "Halibut and Chips" into individual inventory metrics).
+* **Non-Technical Usability:** Staff are not tech-savvy. The application must be accessible via a standard web URL with no manual network configuration required.
+* **Zero-Maintenance Handoff:** The system must run autonomously on managed cloud infrastructure without requiring a dedicated sysadmin to patch servers or restart crashed instances.
+* **Granular Analytics:** End-of-day reporting must break down composite menu items into their constituent parts for accurate inventory metrics.
 
 ---
 
@@ -36,7 +38,7 @@ The system operates across 5 dedicated laptops using a Publisher/Subscriber mode
 
 **Data Modeling (PostgreSQL):**
 * **Orders Table:** Stores metadata, including a generated UUID (Primary Key), the sequential display ticket number, the originating station, and the timestamp.
-* **Order_Items Table:** Stores the individual, broken-down components of an order (e.g., row 1: Halibut, row 2: Chips) linked via Foreign Key to the parent order for seamless end-of-day SQL querying.
+* **Order_Items Table:** Stores the individual, broken-down components of an order linked via Foreign Key to the parent order for seamless end-of-day SQL querying.
 
 ---
 
@@ -112,3 +114,15 @@ Data integrity and privacy are maintained through Role-Based Access Control (RBA
 * Toast types: `error` (red), `warning` (amber), `success` (green), `info` (slate).
 * Toasts must auto-dismiss after 5 seconds (errors) or 3 seconds (success/info). Staff can dismiss early.
 * Toasts must **never** be the sole indicator of a fatal state — fatal errors must still render a visible recovery UI via error boundaries.
+
+---
+
+## 8. Data & Schema Policy
+
+**This system is in production. There is no backwards compatibility requirement.**
+
+* Schema migrations are destructive by default. Old data is not preserved or migrated unless explicitly required for a specific operational reason.
+* New columns are added as `NOT NULL` with no defaults where the domain demands it. Nullable columns are not used as a backwards-compatibility shim.
+* Frontend code must never guard against missing or null fields that are defined as required in the current schema. Null checks for required fields indicate stale data and must be treated as a hard error, not silently swallowed.
+* When a feature changes the shape of an entity (e.g., adding `pickupTime` to orders), the database is wiped or migrated forward — existing rows are not patched to satisfy the new constraint.
+* All development decisions assume a clean slate. Do not write migration paths, dual-code paths, or fallback logic for pre-feature data.

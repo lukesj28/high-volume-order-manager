@@ -25,11 +25,14 @@ export default function Layout() {
   return (
     <div className="h-screen flex flex-col">
       <header className="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center gap-4 flex-wrap">
-        <span className="font-black text-lg text-white tracking-tight">F&C POS</span>
+        <span className="font-black text-lg text-white tracking-tight">POS</span>
 
-        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+        <button
+          onClick={() => navigate('/select-station')}
+          className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full transition-colors"
+        >
           {stationProfile?.name ?? 'No Station'}
-        </span>
+        </button>
 
         <nav className="flex gap-2 text-sm">
           <Link to="/pos" className="text-slate-300 hover:text-white transition-colors">Station</Link>

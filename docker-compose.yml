@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: fishchips_pos
+      POSTGRES_DB: pos_db
       POSTGRES_USER: pos_user
       POSTGRES_PASSWORD: pos_password
     ports:
@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pos_user -d fishchips_pos"]
+      test: ["CMD-SHELL", "pg_isready -U pos_user -d pos_db"]
       interval: 5s
       timeout: 5s
       retries: 5

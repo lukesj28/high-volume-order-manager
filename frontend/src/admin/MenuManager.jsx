@@ -92,7 +92,7 @@ export default function MenuManager() {
               <div key={i} className="flex gap-2 mb-2">
                 <input
                   className="input flex-1"
-                  placeholder="Component name (e.g. Halibut)"
+                  placeholder="Component name"
                   value={comp.componentName}
                   onChange={e => updateComponent(i, 'componentName', e.target.value)}
                 />

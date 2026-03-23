@@ -1,4 +1,4 @@
-# Fish & Chips POS — Good Friday High-Volume Order Manager
+# High-Volume Order Manager
 
 ## Dev Quick Start
 
@@ -91,4 +91,4 @@ PENDING ─── Kitchen ──► IN_PROGRESS ─── Front Window/Backdoor 
 Orders queue in IndexedDB when offline. Sync is automatic on reconnect. Header shows offline badge with queue count.
 
 ## Adding Menu Items
-Admin → Menu → Add Item. Define components (e.g., "Halibut and Chips" → Halibut ×1, Chips ×1) for analytics breakdown.
+Admin → Menu → Add Item. Define components for composite items (e.g., a combo split into its constituent parts) for analytics breakdown.

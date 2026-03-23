@@ -12,14 +12,14 @@
     </parent>
 
     <groupId>com.pos</groupId>
-    <artifactId>fishchips</artifactId>
+    <artifactId>order-manager</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>fishchips-pos</name>
+    <name>order-manager</name>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>24</java.version>
         <jjwt.version>0.12.6</jjwt.version>
-        <lombok.version>1.18.36</lombok.version>
+        <lombok.version>1.18.38</lombok.version>
     </properties>
 
     <dependencies>

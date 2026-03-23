@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/fishchips_pos}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/pos_db}
     username: ${DATABASE_USER:pos_user}
     password: ${DATABASE_PASSWORD:pos_password}
     hikari:
@@ -35,5 +35,5 @@ management:
 
 logging:
   level:
-    com.pos.fishchips: DEBUG
+    com.pos.app: DEBUG
     org.springframework.web.socket: INFO

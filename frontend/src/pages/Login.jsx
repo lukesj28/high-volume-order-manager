@@ -30,8 +30,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-white mb-1">F&C POS</h1>
-          <p className="text-slate-400">Good Friday Order System</p>
+          <h1 className="text-4xl font-black text-white mb-1">Order Manager</h1>
+          <p className="text-slate-400">High-Volume Order System</p>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">

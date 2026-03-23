@@ -66,16 +66,30 @@ function ItemButton({ item, qty, onSet }) {
   )
 }
 
-function SubmitModal({ submitFields, onConfirm, onCancel }) {
+function defaultPickupTimeValue(offsetMinutes) {
+  const d = new Date(Date.now() + offsetMinutes * 60000)
+  return d.toTimeString().slice(0, 5) // "HH:MM"
+}
+
+function timeValueToISOToday(timeValue) {
+  const [h, m] = timeValue.split(':').map(Number)
+  const d = new Date()
+  d.setHours(h, m, 0, 0)
+  return d.toISOString()
+}
+
+function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel }) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [app, setApp] = useState('')
+  const [pickupTime, setPickupTime] = useState(() => defaultPickupTimeValue(defaultPickupOffset))
 
   const handleConfirm = () => {
     const pickupParts = [name.trim(), phone.trim()].filter(Boolean)
     onConfirm({
       pickupName: pickupParts.join(' — ') || null,
       sourceApp: app || null,
+      pickupTime: timeValueToISOToday(pickupTime),
     })
   }
 
@@ -83,6 +97,19 @@ function SubmitModal({ submitFields, onConfirm, onCancel }) {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-80 space-y-4">
         <h3 className="font-bold text-white text-lg">Order Details</h3>
+
+        {submitFields.includes('pickupTime') && (
+          <div>
+            <label className="label">Pickup Time</label>
+            <input
+              type="time"
+              className="input w-full"
+              value={pickupTime}
+              onChange={e => setPickupTime(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+            />
+          </div>
+        )}
 
         {submitFields.includes('name') && (
           <div>
@@ -220,6 +247,7 @@ export default function POS() {
 
   const streams = stationProfile?.displayConfig?.streams ?? [{ label: null, stationNames: null }]
   const submitFields = stationProfile?.displayConfig?.submitFields ?? []
+  const defaultPickupOffset = activeDay?.defaultPickupOffsetMinutes ?? 10
 
   const cartItems = menu
     .filter(item => (cart[item.id] ?? 0) > 0)
@@ -249,13 +277,13 @@ export default function POS() {
     }
   })
 
-  const doSubmit = ({ pickupName = null, sourceApp = null } = {}) => {
+  const doSubmit = ({ pickupName = null, sourceApp = null, pickupTime = null } = {}) => {
     if (itemCount === 0) return
     if (!activeDay) { alert('No active day. Ask staff to open the day first.'); return }
     mutation.mutate({
       id: crypto.randomUUID(),
       items: cartItems.map(({ id, qty }) => ({ menuItemId: id, quantity: qty })),
-      pickupName, sourceApp,
+      pickupName, sourceApp, pickupTime,
       createdAt: new Date().toISOString()
     })
   }
@@ -263,7 +291,7 @@ export default function POS() {
   const handleSubmitClick = () => {
     if (itemCount === 0) return
     if (submitFields.length > 0) setShowModal(true)
-    else doSubmit()
+    else doSubmit({ pickupTime: new Date(Date.now() + defaultPickupOffset * 60000).toISOString() })
   }
 
   const previewProps = {
@@ -340,6 +368,7 @@ export default function POS() {
         {showModal && (
           <SubmitModal
             submitFields={submitFields}
+            defaultPickupOffset={defaultPickupOffset}
             onConfirm={details => { setShowModal(false); doSubmit(details) }}
             onCancel={() => setShowModal(false)}
           />

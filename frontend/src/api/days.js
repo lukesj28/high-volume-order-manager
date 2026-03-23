@@ -11,3 +11,6 @@ export const closeDay = () =>
 
 export const getAllDays = () =>
   client.get('/days').then(r => r.data)
+
+export const updateDaySettings = (settings) =>
+  client.patch('/days/settings', settings).then(r => r.data)

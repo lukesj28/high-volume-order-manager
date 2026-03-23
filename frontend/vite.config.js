@@ -26,7 +26,7 @@ export default defineConfig({
         ]
       },
       manifest: {
-        name: 'Fish & Chips POS',
+        name: 'Order Manager',
         short_name: 'POS',
         description: 'Point of Sale system for Good Friday high-volume service',
         theme_color: '#1e3a5f',
@@ -40,6 +40,9 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    sourcemap: false,
+  },
   server: {
     proxy: {
       '/api': {

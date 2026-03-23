@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import StationProfileEditor from '../admin/StationProfileEditor'
 import MenuManager from '../admin/MenuManager'
 import UserManager from '../admin/UserManager'
+import DaySettings from '../admin/DaySettings'
 
 const TABS = [
   { id: 'stations', label: 'Station Profiles' },
   { id: 'menu', label: 'Menu' },
   { id: 'users', label: 'Users' },
+  { id: 'settings', label: 'Settings' },
 ]
 
 export default function Admin() {
@@ -35,6 +37,7 @@ export default function Admin() {
       {tab === 'stations' && <StationProfileEditor />}
       {tab === 'menu' && <MenuManager />}
       {tab === 'users' && <UserManager />}
+      {tab === 'settings' && <DaySettings />}
     </div>
   )
 }
