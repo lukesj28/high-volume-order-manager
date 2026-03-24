@@ -13,6 +13,7 @@ import com.pos.app.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,8 +58,8 @@ public class OrderController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<OrderResponse>> getAll(
-            @AuthenticationPrincipal PosUserDetails user) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAll() {
         EventDay day = eventDayService.getActiveDay()
                 .orElseThrow(() -> AppException.badRequest("No active day"));
         return ResponseEntity.ok(orderService.getAllOrdersForDay(day.getId()));

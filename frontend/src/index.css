@@ -4,37 +4,37 @@
 
 @layer base {
   body {
-    @apply bg-slate-900 text-slate-100 font-sans;
+    @apply bg-zinc-950 text-slate-200 font-sans tracking-normal selection:bg-blue-500/30;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-4 py-2 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed tracking-wide text-sm border rounded-lg;
   }
   .btn-primary {
-    @apply btn bg-blue-600 hover:bg-blue-500 text-white focus:ring-blue-500;
+    @apply btn border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 focus:ring-blue-500;
   }
   .btn-success {
-    @apply btn bg-green-600 hover:bg-green-500 text-white focus:ring-green-500;
+    @apply btn border-green-500/50 bg-green-500/10 hover:bg-green-500/20 text-green-400 focus:ring-green-500;
   }
   .btn-warning {
-    @apply btn bg-amber-500 hover:bg-amber-400 text-white focus:ring-amber-500;
+    @apply btn border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 focus:ring-amber-500;
   }
   .btn-danger {
-    @apply btn bg-red-600 hover:bg-red-500 text-white focus:ring-red-500;
+    @apply btn border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-500 focus:ring-red-500;
   }
   .btn-ghost {
-    @apply btn bg-slate-700 hover:bg-slate-600 text-slate-200 focus:ring-slate-500;
+    @apply btn border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 focus:ring-zinc-500;
   }
   .card {
-    @apply bg-slate-800 rounded-xl border border-slate-700 p-4;
+    @apply bg-zinc-900 border border-zinc-800/80 p-5 rounded-2xl shadow-sm;
   }
   .input {
-    @apply bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-slate-100
-           placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full;
+    @apply bg-zinc-900 border border-zinc-700/80 px-3 py-2 text-slate-100 font-mono text-sm
+           placeholder-zinc-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-full rounded-xl transition-all;
   }
   .label {
-    @apply block text-sm font-medium text-slate-300 mb-1;
+    @apply block text-sm font-medium text-zinc-400 tracking-wide mb-1.5;
   }
 }

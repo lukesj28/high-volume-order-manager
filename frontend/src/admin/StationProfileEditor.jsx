@@ -6,8 +6,18 @@ const EMPTY = {
   name: '', canSubmit: false, canSetInProgress: false, canSetCompleted: false,
   canSkipToCompleted: false, subscribeToStations: [], displayConfig: {
     showCompleted: true, completedDisplay: 'collapsed', orderGroups: ['PENDING', 'IN_PROGRESS', 'COMPLETED'],
-    streams: [{ label: '', stationNames: '' }]
+    submitFields: [], streams: [{ label: '', stationNames: '' }]
   }, displayOrder: 0
+}
+
+const STATUS_LABELS = { PENDING: 'Pending', IN_PROGRESS: 'In Progress', COMPLETED: 'Completed' }
+
+function moveItem(arr, index, dir) {
+  const next = index + dir
+  if (next < 0 || next >= arr.length) return arr
+  const out = [...arr]
+  ;[out[index], out[next]] = [out[next], out[index]]
+  return out
 }
 
 // Streams helpers: internal form uses strings, DB uses arrays/null
@@ -136,6 +146,7 @@ export default function StationProfileEditor() {
                 ['name', 'Customer Name / Code'],
                 ['phone', 'Phone Number'],
                 ['app', 'App / Platform (Uber Eats, DoorDash, etc.)'],
+                ['pickupTime', 'Pickup Time'],
               ].map(([value, label]) => {
                 const checked = (form.displayConfig?.submitFields ?? []).includes(value)
                 return (
@@ -174,6 +185,24 @@ export default function StationProfileEditor() {
                   <option value="hidden">Hidden</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="label">Order Group Sequence</p>
+            <p className="text-xs text-slate-500 mb-2">Drag or reorder how status groups appear on the board</p>
+            <div className="space-y-1">
+              {(form.displayConfig?.orderGroups ?? ['PENDING', 'IN_PROGRESS', 'COMPLETED']).map((status, i, arr) => (
+                <div key={status} className="flex items-center gap-2">
+                  <span className="text-sm text-slate-300 flex-1">{STATUS_LABELS[status]}</span>
+                  <button type="button" className="btn-ghost text-xs py-0.5 px-2 disabled:opacity-30"
+                    disabled={i === 0}
+                    onClick={() => setDisplayConfig('orderGroups', moveItem(arr, i, -1))}>↑</button>
+                  <button type="button" className="btn-ghost text-xs py-0.5 px-2 disabled:opacity-30"
+                    disabled={i === arr.length - 1}
+                    onClick={() => setDisplayConfig('orderGroups', moveItem(arr, i, 1))}>↓</button>
+                </div>
+              ))}
             </div>
           </div>
 

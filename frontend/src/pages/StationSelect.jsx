@@ -27,21 +27,21 @@ export default function StationSelect() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-white mb-1">Select Station</h1>
-          <p className="text-slate-400">Welcome, {user?.username}</p>
+          <h1 className="text-2xl font-black text-white mb-1 tracking-wide">Select Station</h1>
+          <p className="text-zinc-400 text-sm font-medium tracking-wide">Auth: {user?.username}</p>
         </div>
 
-        {isLoading && <p className="text-slate-500 text-center">Loading stations…</p>}
-        {error && <p className="text-red-400 text-sm text-center mb-4">Failed to load stations</p>}
+        {isLoading && <p className="text-zinc-400 text-sm font-medium tracking-wide text-center">Loading stations…</p>}
+        {error && <p className="text-red-400 text-sm font-medium tracking-wide text-center mb-4">Failed to load stations</p>}
         {mutation.isError && (
-          <p className="text-red-400 text-sm text-center mb-4">
+          <p className="text-red-400 text-sm font-medium tracking-wide text-center mb-4">
             {mutation.error?.response?.data?.error ?? 'Failed to select station'}
           </p>
         )}
 
         <div className="grid gap-3">
           {profiles.length === 0 && !isLoading && (
-            <p className="text-slate-500 text-center">No station profiles available.</p>
+            <p className="text-zinc-400 text-sm font-medium tracking-wide text-center">No station profiles available.</p>
           )}
           {profiles.map(profile => (
             <button
@@ -52,22 +52,22 @@ export default function StationSelect() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-white group-hover:text-blue-300">
+                  <h2 className="text-base font-bold text-white group-hover:text-blue-400 tracking-wide mb-2 transition-colors">
                     {profile.name}
                   </h2>
-                  <div className="flex gap-2 mt-1 flex-wrap">
+                  <div className="flex gap-2 flex-wrap">
                     {profile.canSubmit && (
-                      <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">Submit Orders</span>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold border border-green-500/30 bg-green-500/10 text-green-400 px-2 py-0.5 rounded-lg">Submit Orders</span>
                     )}
                     {profile.canSetInProgress && (
-                      <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">Mark In Progress</span>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold border border-blue-500/30 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-lg">In Progress</span>
                     )}
                     {profile.canSetCompleted && (
-                      <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Mark Complete</span>
+                      <span className="text-[10px] uppercase tracking-wider font-semibold border border-zinc-500/30 bg-zinc-500/10 text-zinc-400 px-2 py-0.5 rounded-lg">Complete</span>
                     )}
                   </div>
                 </div>
-                <span className="text-slate-500 group-hover:text-blue-400 text-2xl">→</span>
+                <span className="text-zinc-500 group-hover:text-blue-500 text-2xl transition-colors">→</span>
               </div>
             </button>
           ))}

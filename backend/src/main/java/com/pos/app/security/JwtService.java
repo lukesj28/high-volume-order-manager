@@ -6,6 +6,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -73,5 +74,15 @@ public class JwtService {
     public UUID extractStationProfileId(Claims claims) {
         String id = claims.get("stationProfileId", String.class);
         return id != null ? UUID.fromString(id) : null;
+    }
+
+    public UsernamePasswordAuthenticationToken buildAuthentication(String token) {
+        Claims claims = validateAndExtract(token);
+        PosUserDetails userDetails = new PosUserDetails(
+                extractUserId(claims),
+                claims.get("username", String.class),
+                extractRole(claims),
+                extractStationProfileId(claims));
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 }

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore'
 import { useDayStore } from '../store/dayStore'
 import OrderCard from './OrderCard'
 import { CardErrorBoundary } from './ErrorBoundary'
+import { formatTime } from '../utils/formatters'
 
 const DEFAULT_GROUPS = ['PENDING', 'IN_PROGRESS', 'COMPLETED']
 const GROUP_LABELS = {
@@ -21,7 +22,7 @@ function slotKey(pickupTime, intervalMinutes) {
 function slotLabel(slotMinutes) {
   const d = new Date()
   d.setHours(Math.floor(slotMinutes / 60), slotMinutes % 60, 0, 0)
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  return formatTime(d.toISOString())
 }
 
 function groupBySlot(orders, intervalMinutes) {
@@ -43,8 +44,8 @@ function SlottedOrders({ orders, intervalMinutes }) {
     <div className="space-y-3">
       {slots.map(({ slotMinutes, orders: slotOrders }, i) => (
         <div key={slotMinutes}>
-          {i > 0 && <div className="border-t border-slate-700/50 mb-3" />}
-          <p className="text-xs text-slate-600 font-medium tabular-nums mb-1.5">
+          {i > 0 && <div className="border-t border-zinc-700/50 mb-3" />}
+          <p className="text-xs text-zinc-400 font-semibold tracking-wide mb-2 border-b border-zinc-800/80 pb-1.5">
             {slotLabel(slotMinutes)}
           </p>
           <div className="space-y-1.5">
@@ -100,18 +101,18 @@ export default function OrderList({ overrideShowAll = false, stationNames = null
 
         return (
           <section key={status}>
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-xs font-bold text-zinc-300 uppercase tracking-widest">
                 {GROUP_LABELS[status]}
               </h2>
-              <span className="bg-slate-700 text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-zinc-800/80 text-zinc-400 text-[10px] font-bold px-2 py-0.5 border border-zinc-700/50 rounded-lg">
                 {groupOrders.length}
               </span>
             </div>
 
             {isCollapsed ? (
               <details className="group">
-                <summary className="cursor-pointer text-sm text-slate-500 hover:text-slate-300 list-none flex items-center gap-2">
+                <summary className="cursor-pointer text-xs font-medium tracking-wide text-zinc-500 hover:text-zinc-300 list-none flex items-center gap-2">
                   <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
                   Show {groupOrders.length} completed
                 </summary>
@@ -123,7 +124,7 @@ export default function OrderList({ overrideShowAll = false, stationNames = null
               <>
                 <SlottedOrders orders={groupOrders} intervalMinutes={intervalMinutes} />
                 {groupOrders.length === 0 && (
-                  <p className="text-slate-600 text-sm">No orders</p>
+                  <p className="text-zinc-500 text-sm font-medium">No active orders</p>
                 )}
               </>
             )}

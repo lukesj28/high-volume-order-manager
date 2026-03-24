@@ -1,10 +1,11 @@
 package com.pos.app.entity;
 
-import com.pos.app.converter.JsonbConverter;
 import com.pos.app.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class StationProfile {
     @Column(columnDefinition = "TEXT")
     private List<String> subscribeToStations; // null = subscribe to all
 
-    @Convert(converter = JsonbConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> displayConfig;
 

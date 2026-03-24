@@ -84,7 +84,7 @@ public class OrderService {
 
         PosOrder saved = orderRepository.save(order);
         OrderResponse response = OrderResponse.from(saved, "ORDER_CREATED");
-        broadcast(response, station);
+        broadcast(response);
         return response;
     }
 
@@ -106,7 +106,7 @@ public class OrderService {
 
         PosOrder saved = orderRepository.save(order);
         OrderResponse response = OrderResponse.from(saved, "ORDER_UPDATED");
-        broadcast(response, saved.getStationProfile());
+        broadcast(response);
         return response;
     }
 
@@ -158,8 +158,7 @@ public class OrderService {
         }
     }
 
-    private void broadcast(OrderResponse response, StationProfile originStation) {
+    private void broadcast(OrderResponse response) {
         messagingTemplate.convertAndSend("/topic/orders.all", response);
-        messagingTemplate.convertAndSend("/topic/orders.station." + originStation.getId(), response);
     }
 }

@@ -6,7 +6,6 @@ import Login from './pages/Login'
 import StationSelect from './pages/StationSelect'
 import POS from './pages/POS'
 import Admin from './pages/Admin'
-import Analytics from './pages/Analytics'
 import Layout from './components/Layout'
 
 function RequireAuth({ children }) {
@@ -55,11 +54,9 @@ export default function App() {
             <RouteErrorBoundary><POS /></RouteErrorBoundary>
           } />
           <Route path="/board" element={<Navigate to="/pos" replace />} />
+          <Route path="/analytics" element={<Navigate to="/admin" replace />} />
           <Route path="/admin" element={
             <RequireAdmin><RouteErrorBoundary><Admin /></RouteErrorBoundary></RequireAdmin>
-          } />
-          <Route path="/analytics" element={
-            <RequireAdmin><RouteErrorBoundary><Analytics /></RouteErrorBoundary></RequireAdmin>
           } />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

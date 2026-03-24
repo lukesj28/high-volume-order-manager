@@ -17,6 +17,7 @@ export function useWebSocket() {
   const stationProfile = useAuthStore(s => s.stationProfile)
   const upsertOrder = useOrdersStore(s => s.upsertOrder)
   const setOrders = useOrdersStore(s => s.setOrders)
+  const pruneCompleted = useOrdersStore(s => s.pruneCompleted)
   const setActiveDay = useDayStore(s => s.setActiveDay)
 
   const fetchState = useCallback(async () => {
@@ -24,11 +25,12 @@ export function useWebSocket() {
       const [orders, day] = await Promise.all([getActiveOrders(), getActiveDay()])
       setOrders(Array.isArray(orders) ? orders : [])
       setActiveDay(day)
+      pruneCompleted()
     } catch (err) {
       console.error('Failed to fetch authoritative state', err)
       // Don't toast here — this fires on reconnect and may just be "no active day"
     }
-  }, [setOrders, setActiveDay])
+  }, [setOrders, setActiveDay, pruneCompleted])
 
   const safeHandleOrder = useCallback((msg) => {
     try {
@@ -78,11 +80,7 @@ export function useWebSocket() {
         const subs = []
 
         try {
-          if (!stationProfile.subscribeToStations || stationProfile.subscribeToStations.length === 0) {
-            subs.push(client.subscribe('/topic/orders.all', safeHandleOrder))
-          } else {
-            subs.push(client.subscribe(`/topic/orders.station.${stationProfile.id}`, safeHandleOrder))
-          }
+          subs.push(client.subscribe('/topic/orders.all', safeHandleOrder))
 
           subs.push(client.subscribe('/topic/orders.day', safeHandleDay))
         } catch (err) {

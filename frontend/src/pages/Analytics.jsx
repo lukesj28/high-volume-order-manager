@@ -40,7 +40,7 @@ export default function Analytics() {
 
   return (
     <div className="h-full overflow-y-auto space-y-6 max-w-6xl">
-      <h1 className="text-2xl font-black text-white">Analytics</h1>
+      <h1 className="text-2xl font-black text-white tracking-wide">System Analytics</h1>
 
       <div className="card">
         <label className="label">Select Event Day</label>
@@ -69,7 +69,7 @@ export default function Analytics() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="card">
-              <h2 className="font-bold text-white mb-4">Revenue by Station</h2>
+              <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Revenue by Station</h2>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
@@ -90,14 +90,14 @@ export default function Analytics() {
             </div>
 
             <div className="card">
-              <h2 className="font-bold text-white mb-4">Orders by Station</h2>
+              <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Orders by Station</h2>
               <div className="space-y-2">
                 {summary.byStation.map((row, i) => (
                   <div key={row.station} className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="flex-1 text-slate-300 text-sm">{row.station}</span>
-                    <span className="text-white font-bold">{row.orderCount}</span>
-                    <span className="text-slate-400 text-sm w-24 text-right">{formatCAD(row.revenue)}</span>
+                    <div className="w-3 h-3 rounded-md" style={{ background: COLORS[i % COLORS.length] }} />
+                    <span className="flex-1 text-zinc-300 text-sm font-semibold tracking-wide">{row.station}</span>
+                    <span className="text-white font-mono font-bold">{row.orderCount}</span>
+                    <span className="text-zinc-500 font-mono text-sm w-24 text-right">{formatCAD(row.revenue)}</span>
                   </div>
                 ))}
               </div>
@@ -106,19 +106,19 @@ export default function Analytics() {
 
           {summary.hourly?.length > 0 && (
             <div className="card">
-              <h2 className="font-bold text-white mb-4">Hourly Order Volume</h2>
+              <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Hourly Order Volume</h2>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={summary.hourly}>
                   <XAxis
                     dataKey="hour"
                     tickFormatter={h => `${h}:00`}
-                    stroke="#94a3b8"
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    stroke="#71717a"
+                    tick={{ fill: '#71717a', fontSize: 11, fontFamily: 'monospace' }}
                   />
-                  <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                  <YAxis stroke="#71717a" tick={{ fill: '#71717a', fontSize: 11, fontFamily: 'monospace' }} />
                   <Tooltip
                     labelFormatter={h => `${h}:00`}
-                    contentStyle={{ background: '#1e293b', border: '1px solid #334155' }}
+                    contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8, color: '#f4f4f5' }}
                   />
                   <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -128,12 +128,12 @@ export default function Analytics() {
 
           {components.length > 0 && (
             <div className="card">
-              <h2 className="font-bold text-white mb-4">Ingredient Breakdown</h2>
+              <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Ingredient Breakdown</h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {components.map(row => (
-                  <div key={row.component} className="flex justify-between items-center bg-slate-700/40 rounded-lg px-3 py-2">
-                    <span className="text-slate-200">{row.component}</span>
-                    <span className="font-bold text-white text-lg">{row.total}</span>
+                  <div key={row.component} className="flex justify-between items-center bg-zinc-900 border border-zinc-800/80 rounded-lg px-4 py-2">
+                    <span className="text-zinc-300 text-xs font-semibold tracking-wide">{row.component}</span>
+                    <span className="font-mono font-bold text-white text-base">{row.total}</span>
                   </div>
                 ))}
               </div>
@@ -143,7 +143,7 @@ export default function Analytics() {
       )}
 
       <div className="card space-y-4">
-        <h2 className="font-bold text-white">Year-over-Year Comparison</h2>
+        <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 border-b border-zinc-800/80 pb-2">Year-over-Year Comparison</h2>
         <div className="flex gap-3 flex-wrap">
           <div>
             <label className="label">Year 1</label>
@@ -158,10 +158,10 @@ export default function Analytics() {
         {comparison && (
           <div className="grid sm:grid-cols-2 gap-4">
             {[comparison.year1, comparison.year2].map(y => (
-              <div key={y.year} className="bg-slate-700/40 rounded-xl p-4 space-y-2">
-                <h3 className="text-xl font-black text-white">{y.year}</h3>
-                <div className="text-3xl font-black text-blue-400">{formatCAD(y.totalRevenue)}</div>
-                <div className="text-slate-300">{y.totalOrders} orders across {y.eventCount} event{y.eventCount !== 1 ? 's' : ''}</div>
+              <div key={y.year} className="bg-zinc-900 border border-zinc-800/80 rounded-xl p-5 space-y-2">
+                <h3 className="text-sm tracking-widest uppercase font-black text-zinc-500">{y.year}</h3>
+                <div className="text-3xl font-mono font-black text-blue-500">{formatCAD(y.totalRevenue)}</div>
+                <div className="text-zinc-400 text-xs font-medium tracking-wide">{y.totalOrders} orders / {y.eventCount} event{y.eventCount !== 1 ? 's' : ''}</div>
               </div>
             ))}
           </div>
@@ -174,8 +174,8 @@ export default function Analytics() {
 function SummaryCard({ label, value }) {
   return (
     <div className="card text-center">
-      <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">{label}</div>
-      <div className="text-xl font-black text-white">{value}</div>
+      <div className="text-xs text-zinc-400 font-semibold uppercase tracking-wider mb-1">{label}</div>
+      <div className="text-xl font-mono font-bold text-white">{value}</div>
     </div>
   )
 }

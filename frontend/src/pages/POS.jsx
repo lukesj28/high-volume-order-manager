@@ -22,15 +22,15 @@ function ItemButton({ item, qty, onSet }) {
 
   return (
     <div
-      className={`w-full aspect-square rounded-xl flex flex-col border-2 transition-all overflow-hidden
+      className={`w-full aspect-square rounded-2xl flex flex-col border transition-all overflow-hidden
         ${qty > 0
-          ? 'border-blue-500 bg-blue-600/20'
-          : 'border-slate-600 bg-slate-800 hover:border-slate-400'}`}
+          ? 'border-blue-500/60 bg-blue-500/10'
+          : 'border-zinc-800/80 bg-zinc-900 hover:border-zinc-600'}`}
     >
       <button
         onClick={() => onSet(qty + 1)}
-        className="flex-1 flex items-center justify-center text-center px-2 text-xs font-semibold leading-tight w-full
-          text-slate-300 hover:text-white transition-colors"
+        className="flex-1 flex items-center justify-center text-center px-2 text-[11px] uppercase tracking-wide font-semibold leading-tight w-full
+          text-zinc-300 hover:text-white transition-colors"
       >
         {item.name}
       </button>
@@ -39,7 +39,7 @@ function ItemButton({ item, qty, onSet }) {
         <div className="flex items-center gap-1 px-1.5 pb-1.5" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => onSet(qty - 1)}
-            className="w-5 h-5 rounded bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white font-bold text-sm leading-none flex-shrink-0"
+            className="w-5 h-5 bg-zinc-800 hover:bg-zinc-700 rounded-md flex items-center justify-center text-white font-bold text-sm leading-none flex-shrink-0"
           >
             −
           </button>
@@ -49,13 +49,13 @@ function ItemButton({ item, qty, onSet }) {
               onChange={e => setDraft(e.target.value)}
               onBlur={commit}
               onKeyDown={e => e.key === 'Enter' && commit()}
-              className="flex-1 min-w-0 text-center bg-slate-700 text-blue-300 rounded text-xs font-bold border border-blue-400 focus:outline-none py-0.5"
+              className="flex-1 min-w-0 text-center bg-zinc-800/50 text-blue-300 rounded-md text-sm font-semibold border border-blue-400/50 focus:outline-none py-0.5"
             />
           ) : (
-            <span
+             <span
               onClick={() => { setDraft(String(qty)); setEditing(true) }}
               title="Click to edit"
-              className="flex-1 text-center text-blue-300 font-black text-sm tabular-nums border-b border-dashed border-blue-400/50 cursor-text leading-tight"
+              className="flex-1 text-center text-blue-300 font-semibold text-sm cursor-text leading-tight bg-blue-500/5 rounded-md mx-0.5"
             >
               {qty}
             </span>
@@ -95,27 +95,26 @@ function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel })
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-80 space-y-4">
-        <h3 className="font-bold text-white text-lg">Order Details</h3>
+      <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 w-80 space-y-4 shadow-xl">
+        <h3 className="font-bold text-white text-base tracking-wide">Order Details</h3>
 
-        {submitFields.includes('pickupTime') && (
-          <div>
-            <label className="label">Pickup Time</label>
-            <input
-              type="time"
-              className="input w-full"
-              value={pickupTime}
-              onChange={e => setPickupTime(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleConfirm()}
-            />
-          </div>
-        )}
+        <div>
+          <label className="label">Pickup Time</label>
+          <input
+            autoFocus
+            type="time"
+            className="input w-full"
+            value={pickupTime}
+            onChange={e => setPickupTime(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+          />
+        </div>
 
         {submitFields.includes('name') && (
           <div>
             <label className="label">Customer Name / Code</label>
             <input
-              autoFocus className="input" placeholder="e.g. Smith or #47"
+              className="input" placeholder="e.g. Smith or #47"
               value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleConfirm()}
             />
@@ -163,15 +162,30 @@ function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel })
   )
 }
 
+function StreamColumn({ stream }) {
+  return (
+    <div className="flex-1 flex flex-col min-h-0">
+      {stream.label && (
+        <h2 className="flex-shrink-0 text-[10px] uppercase font-bold text-zinc-500 tracking-widest mb-2 border-b border-zinc-800 pb-1">
+          {stream.label}
+        </h2>
+      )}
+      <div className="flex-1 overflow-y-auto pr-1">
+        <OrderList stationNames={stream.stationNames} />
+      </div>
+    </div>
+  )
+}
+
 function CartItemsList({ cartItems, className }) {
   return (
     <div className={className}>
       {cartItems.length === 0
-        ? <p className="text-slate-600 text-sm">No items added</p>
+        ? <p className="text-zinc-500 text-xs tracking-wide font-medium">No items added</p>
         : cartItems.map(item => (
           <div key={item.id} className="flex items-baseline gap-2">
-            <span className="text-blue-400 font-black text-sm tabular-nums w-5 text-right flex-shrink-0">{item.qty}×</span>
-            <span className="text-white text-sm leading-snug">{item.name}</span>
+            <span className="text-blue-400 font-mono font-semibold text-sm tabular-nums w-5 text-right flex-shrink-0">{item.qty}×</span>
+            <span className="text-zinc-200 text-sm tracking-wide font-medium leading-snug">{item.name}</span>
           </div>
         ))
       }
@@ -182,12 +196,12 @@ function CartItemsList({ cartItems, className }) {
 function CartActions({ total, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, alwaysShowClear = true }) {
   return (
     <>
-      <div className="flex justify-between items-baseline">
-        <span className="text-slate-400 text-xs">Total</span>
-        <span className="text-white font-black text-lg">{formatCAD(total)}</span>
+      <div className="flex justify-between items-baseline mb-3">
+        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Total</span>
+        <span className="text-blue-200 font-mono font-bold text-2xl">{formatCAD(total)}</span>
       </div>
       <button
-        className="btn-primary w-full py-3 font-bold text-base"
+        className="btn-primary w-full py-3.5 text-base"
         disabled={itemCount === 0 || isPending}
         onClick={onSubmit}
       >
@@ -213,17 +227,17 @@ function OrderPreview({ cartItems, total, itemCount, isPending, lastSubmitted, i
   if (sidebar) {
     return (
       <>
-        <CartItemsList cartItems={cartItems} className="flex-1 overflow-y-auto min-h-0 space-y-1" />
-        <div className="flex-shrink-0 pt-3 border-t border-slate-700 space-y-2">
+        <CartItemsList cartItems={cartItems} className="flex-1 overflow-y-auto min-h-0 space-y-1.5" />
+        <div className="flex-shrink-0 pt-3 border-t border-zinc-800 space-y-2">
           <CartActions {...{ total, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, alwaysShowClear: false }} />
         </div>
       </>
     )
   }
   return (
-    <div className="flex-shrink-0 border-t border-slate-700 pt-3 space-y-2">
-      <CartItemsList cartItems={cartItems} className="h-36 overflow-y-auto space-y-1" />
-      <div className="border-t border-slate-700/60 pt-2 space-y-2">
+    <div className="flex-shrink-0 border-t border-zinc-800 pt-3 space-y-2">
+      <CartItemsList cartItems={cartItems} className="h-36 overflow-y-auto space-y-1.5" />
+      <div className="border-t border-zinc-800/60 pt-2 space-y-2">
         <CartActions {...{ total, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear }} />
       </div>
     </div>
@@ -290,8 +304,7 @@ export default function POS() {
 
   const handleSubmitClick = () => {
     if (itemCount === 0) return
-    if (submitFields.length > 0) setShowModal(true)
-    else doSubmit({ pickupTime: new Date(Date.now() + defaultPickupOffset * 60000).toISOString() })
+    setShowModal(true)
   }
 
   const previewProps = {
@@ -324,18 +337,7 @@ export default function POS() {
   if (!canSubmit) {
     return (
       <div className="h-full flex gap-4">
-        {streams.map((stream, i) => (
-          <div key={i} className="flex-1 flex flex-col min-h-0">
-            {stream.label && (
-              <h2 className="flex-shrink-0 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                {stream.label}
-              </h2>
-            )}
-            <div className="flex-1 overflow-y-auto pr-1">
-              <OrderList stationNames={stream.stationNames} />
-            </div>
-          </div>
-        ))}
+        {streams.map((stream, i) => <StreamColumn key={i} stream={stream} />)}
       </div>
     )
   }
@@ -351,11 +353,11 @@ export default function POS() {
             <OrderPreview {...previewProps} />
           </div>
 
-          <div className="border-l border-slate-700 flex-shrink-0" />
+          <div className="border-l border-zinc-800 flex-shrink-0" />
 
           <div className="flex-1 flex flex-col min-h-0">
             {streams[0].label && (
-              <h2 className="flex-shrink-0 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+              <h2 className="flex-shrink-0 text-[10px] uppercase font-bold text-zinc-500 tracking-widest mb-2 border-b border-zinc-800 pb-1">
                 {streams[0].label}
               </h2>
             )}
@@ -381,27 +383,16 @@ export default function POS() {
     <>
       <div className="h-full flex flex-col">
         <div className="flex-[4] flex gap-4 min-h-0 overflow-hidden pb-3">
-          {streams.map((stream, i) => (
-            <div key={i} className="flex-1 flex flex-col min-h-0">
-              {stream.label && (
-                <h2 className="flex-shrink-0 text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-                  {stream.label}
-                </h2>
-              )}
-              <div className="flex-1 overflow-y-auto pr-1">
-                <OrderList stationNames={stream.stationNames} />
-              </div>
-            </div>
-          ))}
+          {streams.map((stream, i) => <StreamColumn key={i} stream={stream} />)}
         </div>
 
-        <div className="border-t border-slate-700 flex-shrink-0" />
+        <div className="border-t border-zinc-800 flex-shrink-0" />
 
         <div className="flex-[5] flex gap-4 min-h-0 overflow-hidden pt-3">
           <div className="flex-1 overflow-y-auto min-h-0">
             {itemGrid}
           </div>
-          <div className="w-44 flex-shrink-0 flex flex-col min-h-0 border-l border-slate-700 pl-4">
+          <div className="w-44 flex-shrink-0 flex flex-col min-h-0 border-l border-zinc-800 pl-4">
             <OrderPreview {...previewProps} sidebar />
           </div>
         </div>
@@ -410,6 +401,7 @@ export default function POS() {
       {showModal && (
         <SubmitModal
           submitFields={submitFields}
+          defaultPickupOffset={defaultPickupOffset}
           onConfirm={details => { setShowModal(false); doSubmit(details) }}
           onCancel={() => setShowModal(false)}
         />

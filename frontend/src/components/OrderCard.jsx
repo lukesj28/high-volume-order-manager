@@ -4,13 +4,13 @@ import { updateStatus } from '../api/orders'
 import { useOrdersStore } from '../store/ordersStore'
 import { useAuthStore } from '../store/authStore'
 import { canTransition, requiresConfirmation } from '../utils/stateMachine'
-import { formatCAD } from '../utils/formatters'
+import { formatCAD, formatTime } from '../utils/formatters'
 import ConfirmModal from './ConfirmModal'
 
 const STATUS_STYLE = {
-  PENDING:     'border-l-amber-500 bg-slate-800/80',
-  IN_PROGRESS: 'border-l-blue-500 bg-blue-950/40',
-  COMPLETED:   'border-l-slate-600 bg-slate-800/30 opacity-50',
+  PENDING:     'border-l-amber-500 bg-zinc-900 border-r border-t border-b border-zinc-700/50',
+  IN_PROGRESS: 'border-l-blue-500 bg-blue-500/5 border-r border-t border-b border-blue-500/30',
+  COMPLETED:   'border-l-zinc-600 bg-zinc-900/50 border-r border-t border-b border-zinc-800 opacity-60',
 }
 
 export default function OrderCard({ order }) {
@@ -49,45 +49,45 @@ export default function OrderCard({ order }) {
     <>
       <div
         onClick={handleTap}
-        className={`border-l-4 rounded-r-lg px-3 py-2 space-y-1.5 transition-all
-          ${STATUS_STYLE[order.status] ?? 'border-l-slate-600 bg-slate-800'}
-          ${isActionable ? 'cursor-pointer hover:brightness-125 active:scale-[0.98]' : ''}
-          ${mutation.isPending ? 'opacity-60' : ''}`}
+        className={`border-l-[3px] rounded-r-xl px-4 py-3 space-y-2 transition-all shadow-sm
+          ${STATUS_STYLE[order.status] ?? 'border-l-zinc-600 bg-zinc-900'}
+          ${isActionable ? 'cursor-pointer hover:brightness-110 active:scale-[0.99]' : ''}
+          ${mutation.isPending ? 'opacity-50 blur-[1px]' : ''}`}
       >
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-black text-white leading-none tabular-nums">
+          <span className="text-2xl font-mono font-bold text-slate-100 leading-none tabular-nums tracking-wide">
             #{order.ticketNumber}
           </span>
           {order.pickupName && (
-            <span className="text-sm font-semibold text-slate-200 truncate">
+            <span className="text-sm font-semibold text-zinc-300 truncate">
               {order.pickupName}
             </span>
           )}
-          <span className="ml-auto flex-shrink-0 flex items-center gap-1.5">
-            <span className="text-xs font-semibold text-slate-300 tabular-nums">
-              {new Date(order.pickupTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <span className="ml-auto flex-shrink-0 flex items-center gap-2">
+            <span className="text-sm font-mono font-medium text-zinc-400 tabular-nums">
+              {formatTime(order.pickupTime)}
             </span>
             {order.sourceApp && (
-              <span className="text-xs text-slate-500">
+              <span className="text-xs border border-zinc-700/80 bg-zinc-800/50 text-zinc-300 uppercase tracking-wide font-medium px-1.5 py-0.5 rounded-md">
                 {order.sourceApp}
               </span>
             )}
           </span>
         </div>
 
-        <ul className="space-y-0.5">
+        <ul className="space-y-1.5">
           {order.items.map(item => (
-            <li key={item.id} className="text-sm text-slate-200 flex gap-2">
-              <span className="font-black text-white tabular-nums w-5 text-right flex-shrink-0">
+            <li key={item.id} className="flex gap-2 items-baseline">
+              <span className="font-mono font-bold text-blue-400 tabular-nums w-6 text-right flex-shrink-0 text-base">
                 {item.quantity}×
               </span>
-              <span>{item.menuItemName}</span>
+              <span className="text-base font-semibold text-zinc-100">{item.menuItemName}</span>
             </li>
           ))}
         </ul>
 
-        <div className="flex justify-end pt-0.5">
-          <span className="text-sm font-bold text-slate-300">
+        <div className="flex justify-end pt-1">
+          <span className="text-sm font-mono font-bold text-zinc-500">
             {formatCAD(order.totalPrice)}
           </span>
         </div>

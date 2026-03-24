@@ -27,12 +27,22 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> AppException.forbidden("Invalid credentials"));
-
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        String password = request.password().strip();
+        if (password.isEmpty() || password.length() > 128) {
             throw AppException.forbidden("Invalid credentials");
         }
+
+        // Iterate all users without short-circuiting to avoid timing oracle
+        User matched = null;
+        for (User u : userRepository.findAll()) {
+            if (passwordEncoder.matches(password, u.getPasswordHash()) && matched == null) {
+                matched = u;
+            }
+        }
+        if (matched == null) {
+            throw AppException.forbidden("Invalid credentials");
+        }
+        User user = matched;
 
         String token = jwtService.generateInitialToken(user);
         List<StationProfileDto> profiles = stationProfileRepository.findAllByOrderByDisplayOrderAsc()
@@ -51,9 +61,7 @@ public class AuthService {
 
     @Transactional
     public void changeStaffPassword(String newPassword) {
-        User staff = userRepository.findAll().stream()
-                .filter(u -> u.getRole() == User.Role.STAFF)
-                .findFirst()
+        User staff = userRepository.findFirstByRole(User.Role.STAFF)
                 .orElseThrow(() -> AppException.notFound("Staff account not found"));
         staff.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(staff);
