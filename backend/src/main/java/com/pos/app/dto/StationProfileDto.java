@@ -15,15 +15,21 @@ public record StationProfileDto(
         boolean canSkipToCompleted,
         List<String> subscribeToStations,
         Map<String, Object> displayConfig,
-        int displayOrder
+        int displayOrder,
+        boolean counterEnabled,
+        Integer counterNextValue // current next value for the active day; null if no active day
 ) {
     public static StationProfileDto from(StationProfile sp) {
+        return from(sp, null);
+    }
+
+    public static StationProfileDto from(StationProfile sp, Integer counterNextValue) {
         return new StationProfileDto(
                 sp.getId(), sp.getName(),
                 sp.isCanSubmit(), sp.isCanSetInProgress(),
                 sp.isCanSetCompleted(), sp.isCanSkipToCompleted(),
                 sp.getSubscribeToStations(), sp.getDisplayConfig(),
-                sp.getDisplayOrder()
+                sp.getDisplayOrder(), sp.isCounterEnabled(), counterNextValue
         );
     }
 }

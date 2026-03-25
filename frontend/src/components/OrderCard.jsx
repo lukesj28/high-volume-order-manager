@@ -7,6 +7,9 @@ import { canTransition, requiresConfirmation } from '../utils/stateMachine'
 import { formatCAD, formatTime } from '../utils/formatters'
 import ConfirmModal from './ConfirmModal'
 
+const orderLabel = (order) =>
+  order.streamTicketNumber != null ? `#${order.streamTicketNumber}` : (order.pickupName ?? '—')
+
 const STATUS_STYLE = {
   PENDING:     'border-l-amber-500 bg-zinc-900 border-r border-t border-b border-zinc-700/50',
   IN_PROGRESS: 'border-l-blue-500 bg-blue-500/5 border-r border-t border-b border-blue-500/30',
@@ -55,12 +58,13 @@ export default function OrderCard({ order }) {
           ${mutation.isPending ? 'opacity-50 blur-[1px]' : ''}`}
       >
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-mono font-bold text-slate-100 leading-none tabular-nums tracking-wide">
-            #{order.ticketNumber}
-          </span>
-          {order.pickupName && (
-            <span className="text-sm font-semibold text-zinc-300 truncate">
-              {order.pickupName}
+          {order.streamTicketNumber != null ? (
+            <span className="text-2xl font-mono font-bold text-slate-100 leading-none tabular-nums tracking-wide">
+              {orderLabel(order)}
+            </span>
+          ) : (
+            <span className="text-xl font-semibold text-slate-100 leading-none truncate">
+              {orderLabel(order)}
             </span>
           )}
           <span className="ml-auto flex-shrink-0 flex items-center gap-2">
@@ -96,7 +100,7 @@ export default function OrderCard({ order }) {
       {confirming && (
         <ConfirmModal
           title="Skip to Completed?"
-          message={`Order #${order.ticketNumber} hasn't been marked In Progress yet. Complete it anyway?`}
+          message={`Order ${orderLabel(order)} hasn't been marked In Progress yet. Complete it anyway?`}
           onConfirm={handleConfirm}
           onCancel={() => setConfirming(false)}
         />

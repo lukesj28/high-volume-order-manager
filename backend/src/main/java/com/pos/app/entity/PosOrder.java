@@ -20,7 +20,9 @@ public class PosOrder {
     @Id
     private UUID id; // Set by client (UUID v4)
 
-    private int ticketNumber;
+    private int ticketNumber; // Internal only — not shown to users
+
+    private Integer streamTicketNumber; // Counter-enabled stations only — shown as #N to users
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_day_id", nullable = false)

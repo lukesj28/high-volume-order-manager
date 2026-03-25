@@ -9,7 +9,8 @@ import java.util.UUID;
 
 public record OrderResponse(
         UUID id,
-        int ticketNumber,
+        int ticketNumber, // Internal only
+        Integer streamTicketNumber, // Counter-enabled stations only
         String stationName,
         UUID stationProfileId,
         String status,
@@ -44,6 +45,7 @@ public record OrderResponse(
         return new OrderResponse(
                 order.getId(),
                 order.getTicketNumber(),
+                order.getStreamTicketNumber(),
                 order.getStationProfile().getName(),
                 order.getStationProfile().getId(),
                 order.getStatus().name(),

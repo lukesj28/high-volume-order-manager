@@ -1,8 +1,12 @@
 package com.pos.app.controller;
 
 import com.pos.app.dto.StationProfileDto;
+import com.pos.app.entity.EventDay;
+import com.pos.app.entity.StationCounter;
 import com.pos.app.entity.StationProfile;
 import com.pos.app.exception.AppException;
+import com.pos.app.repository.EventDayRepository;
+import com.pos.app.repository.StationCounterRepository;
 import com.pos.app.repository.StationProfileRepository;
 import com.pos.app.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -21,19 +27,33 @@ import java.util.UUID;
 public class AdminController {
 
     private final StationProfileRepository stationProfileRepository;
+    private final StationCounterRepository stationCounterRepository;
+    private final EventDayRepository eventDayRepository;
     private final AuthService authService;
 
     @GetMapping("/station-profiles")
     public ResponseEntity<List<StationProfileDto>> getProfiles() {
-        return ResponseEntity.ok(stationProfileRepository.findAllByOrderByDisplayOrderAsc()
-                .stream().map(StationProfileDto::from).toList());
+        List<StationProfile> profiles = stationProfileRepository.findAllByOrderByDisplayOrderAsc();
+
+        // Fetch all counters for active day in one query to avoid N+1
+        Optional<EventDay> activeDay = eventDayRepository.findByIsActiveTrue();
+        Map<UUID, Integer> countersByStation = activeDay
+                .map(day -> stationCounterRepository.findAllByEventDayId(day.getId()).stream()
+                        .collect(Collectors.toMap(StationCounter::getStationProfileId, StationCounter::getNextValue)))
+                .orElse(Map.of());
+
+        return ResponseEntity.ok(profiles.stream()
+                .map(sp -> StationProfileDto.from(sp, countersByStation.get(sp.getId())))
+                .toList());
     }
 
     @PostMapping("/station-profiles")
     public ResponseEntity<StationProfileDto> createProfile(@RequestBody StationProfileDto dto) {
         StationProfile sp = new StationProfile();
         applyDto(sp, dto);
-        return ResponseEntity.ok(StationProfileDto.from(stationProfileRepository.save(sp)));
+        StationProfile saved = stationProfileRepository.save(sp);
+        upsertCounterIfNeeded(saved, dto);
+        return ResponseEntity.ok(StationProfileDto.from(saved, dto.counterNextValue()));
     }
 
     @PutMapping("/station-profiles/{id}")
@@ -42,7 +62,9 @@ public class AdminController {
         StationProfile sp = stationProfileRepository.findById(id)
                 .orElseThrow(() -> AppException.notFound("Station profile not found"));
         applyDto(sp, dto);
-        return ResponseEntity.ok(StationProfileDto.from(stationProfileRepository.save(sp)));
+        StationProfile saved = stationProfileRepository.save(sp);
+        upsertCounterIfNeeded(saved, dto);
+        return ResponseEntity.ok(StationProfileDto.from(saved, dto.counterNextValue()));
     }
 
     @DeleteMapping("/station-profiles/{id}")
@@ -70,5 +92,25 @@ public class AdminController {
         sp.setSubscribeToStations(dto.subscribeToStations());
         sp.setDisplayConfig(dto.displayConfig());
         sp.setDisplayOrder(dto.displayOrder());
+        sp.setCounterEnabled(dto.counterEnabled());
+    }
+
+    // If counter is enabled and a next value is provided, upsert station_counters for the active day
+    private void upsertCounterIfNeeded(StationProfile sp, StationProfileDto dto) {
+        if (!dto.counterEnabled() || dto.counterNextValue() == null) return;
+        if (dto.counterNextValue() < 1)
+            throw AppException.badRequest("Counter next value must be at least 1");
+        eventDayRepository.findByIsActiveTrue().ifPresent(day -> {
+            StationCounter counter = stationCounterRepository
+                    .findByStationProfileIdAndEventDayId(sp.getId(), day.getId())
+                    .orElseGet(() -> {
+                        StationCounter c = new StationCounter();
+                        c.setStationProfileId(sp.getId());
+                        c.setEventDayId(day.getId());
+                        return c;
+                    });
+            counter.setNextValue(dto.counterNextValue());
+            stationCounterRepository.save(counter);
+        });
     }
 }

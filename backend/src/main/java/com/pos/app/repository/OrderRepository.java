@@ -29,6 +29,9 @@ public interface OrderRepository extends JpaRepository<PosOrder, UUID> {
     @Query(value = "SELECT next_ticket_number(:dayId)", nativeQuery = true)
     Integer getNextTicketNumber(@Param("dayId") UUID dayId);
 
+    @Query(value = "SELECT next_stream_ticket_number(:stationId, :dayId)", nativeQuery = true)
+    Integer getNextStreamTicketNumber(@Param("stationId") UUID stationId, @Param("dayId") UUID dayId);
+
     @Query("SELECT HOUR(o.createdAt) as hour, COUNT(o) as count " +
            "FROM PosOrder o WHERE o.eventDay.id = :dayId GROUP BY HOUR(o.createdAt)")
     List<Object[]> countOrdersByHour(@Param("dayId") UUID dayId);

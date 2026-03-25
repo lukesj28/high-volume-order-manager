@@ -7,7 +7,7 @@ const EMPTY = {
   canSkipToCompleted: false, subscribeToStations: [], displayConfig: {
     showCompleted: true, completedDisplay: 'collapsed', orderGroups: ['PENDING', 'IN_PROGRESS', 'COMPLETED'],
     submitFields: [], streams: [{ label: '', stationNames: '' }]
-  }, displayOrder: 0
+  }, displayOrder: 0, counterEnabled: false, counterNextValue: null
 }
 
 const STATUS_LABELS = { PENDING: 'Pending', IN_PROGRESS: 'In Progress', COMPLETED: 'Completed' }
@@ -56,7 +56,7 @@ export default function StationProfileEditor() {
 
   const startEdit = (profile) => {
     setEditing(profile)
-    setForm({ ...profile })
+    setForm({ ...profile, counterNextValue: profile.counterNextValue ?? null })
     setSubsText(profile.subscribeToStations?.join(', ') ?? '')
     setStreamRows(streamsToForm(profile.displayConfig?.streams))
   }
@@ -78,7 +78,8 @@ export default function StationProfileEditor() {
       displayConfig: {
         ...form.displayConfig,
         streams: streamsFromForm(streamRows)
-      }
+      },
+      counterNextValue: form.counterEnabled && form.counterNextValue !== '' ? Number(form.counterNextValue) : null
     }
     if (editing === 'new') createMutation.mutate(data)
     else updateMutation.mutate({ id: editing.id, data })
@@ -139,12 +140,37 @@ export default function StationProfileEditor() {
           </div>
 
           <div>
+            <p className="label">Order Counter</p>
+            <p className="text-xs text-slate-500 mb-2">Assigns an incrementing number to each order from this station, isolated from other stations</p>
+            <label className="flex items-center gap-2 cursor-pointer mb-2">
+              <input type="checkbox" className="accent-blue-500 w-4 h-4"
+                checked={form.counterEnabled ?? false}
+                onChange={e => setForm(f => ({ ...f, counterEnabled: e.target.checked }))} />
+              <span className="text-sm text-slate-300">Enable counter for this station</span>
+            </label>
+            {form.counterEnabled && (
+              <div>
+                <label className="label">Next Number</label>
+                <input
+                  className="input w-32"
+                  type="number" min="1"
+                  placeholder="e.g. 1"
+                  value={form.counterNextValue ?? ''}
+                  onChange={e => setForm(f => ({ ...f, counterNextValue: e.target.value }))}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  {form.counterNextValue ? `Next order will be #${form.counterNextValue}` : 'Leave blank to keep current value'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div>
             <p className="label">Submit Fields</p>
             <p className="text-xs text-slate-500 mb-2">Fields shown in the order details modal when submitting</p>
             <div className="space-y-2">
               {[
                 ['name', 'Customer Name / Code'],
-                ['phone', 'Phone Number'],
                 ['app', 'App / Platform (Uber Eats, DoorDash, etc.)'],
                 ['pickupTime', 'Pickup Time'],
               ].map(([value, label]) => {
@@ -260,6 +286,11 @@ export default function StationProfileEditor() {
                 {p.canSetInProgress && <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">In Progress</span>}
                 {p.canSetCompleted && <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Complete</span>}
                 {p.canSkipToCompleted && <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Skip</span>}
+                {p.counterEnabled && (
+                  <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded">
+                    Counter{p.counterNextValue != null ? ` (next: #${p.counterNextValue})` : ''}
+                  </span>
+                )}
                 {!p.subscribeToStations && <span className="text-xs bg-slate-600 text-slate-300 px-2 py-0.5 rounded">All stations</span>}
                 {p.subscribeToStations?.map(s => (
                   <span key={s} className="text-xs bg-slate-600 text-slate-300 px-2 py-0.5 rounded">{s}</span>

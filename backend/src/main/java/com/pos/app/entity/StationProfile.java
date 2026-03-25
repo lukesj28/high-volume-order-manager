@@ -38,4 +38,6 @@ public class StationProfile {
     private Map<String, Object> displayConfig;
 
     private int displayOrder;
+
+    private boolean counterEnabled;
 }

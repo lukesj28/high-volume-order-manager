@@ -80,14 +80,12 @@ function timeValueToISOToday(timeValue) {
 
 function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel }) {
   const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
   const [app, setApp] = useState('')
   const [pickupTime, setPickupTime] = useState(() => defaultPickupTimeValue(defaultPickupOffset))
 
   const handleConfirm = () => {
-    const pickupParts = [name.trim(), phone.trim()].filter(Boolean)
     onConfirm({
-      pickupName: pickupParts.join(' — ') || null,
+      pickupName: name.trim() || null,
       sourceApp: app || null,
       pickupTime: timeValueToISOToday(pickupTime),
     })
@@ -116,17 +114,6 @@ function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel })
             <input
               className="input" placeholder="e.g. Smith or #47"
               value={name} onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleConfirm()}
-            />
-          </div>
-        )}
-
-        {submitFields.includes('phone') && (
-          <div>
-            <label className="label">Phone Number</label>
-            <input
-              type="tel" className="input" placeholder="e.g. 416-555-0123"
-              value={phone} onChange={e => setPhone(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleConfirm()}
             />
           </div>

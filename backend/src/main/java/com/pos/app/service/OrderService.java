@@ -50,12 +50,19 @@ public class OrderService {
             return OrderResponse.from(existing, "ORDER_CREATED");
         }
 
-        // Assign ticket number inside transaction (race-condition safe)
+        // Assign ticket numbers inside transaction (race-condition safe)
         int ticketNumber = orderRepository.getNextTicketNumber(day.getId());
+        Integer streamTicketNumber = null;
+        if (station.isCounterEnabled()) {
+            streamTicketNumber = orderRepository.getNextStreamTicketNumber(station.getId(), day.getId());
+            if (streamTicketNumber == null)
+                throw AppException.badRequest("Failed to assign stream ticket number");
+        }
 
         PosOrder order = new PosOrder();
         order.setId(request.id());
         order.setTicketNumber(ticketNumber);
+        order.setStreamTicketNumber(streamTicketNumber);
         order.setEventDay(day);
         order.setStationProfile(station);
         order.setPickupName(request.pickupName());
