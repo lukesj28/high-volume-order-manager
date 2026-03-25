@@ -16,7 +16,7 @@ const GROUP_LABELS = {
 function slotKey(pickupTime, intervalMinutes) {
   const d = new Date(pickupTime)
   const totalMinutes = d.getHours() * 60 + d.getMinutes()
-  return Math.floor(totalMinutes / intervalMinutes) * intervalMinutes
+  return Math.ceil(totalMinutes / intervalMinutes) * intervalMinutes
 }
 
 function slotLabel(slotMinutes) {

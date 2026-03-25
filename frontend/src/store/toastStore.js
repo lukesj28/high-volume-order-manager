@@ -12,7 +12,7 @@ export const useToastStore = create((set) => ({
   remove: (id) => set(s => ({ toasts: s.toasts.filter(t => t.id !== id) })),
 }))
 
-// Standalone helper so non-React code can push toasts
+// for non-React code
 export function toast(message, type = 'error', duration = 5000) {
   useToastStore.getState().add(message, type, duration)
 }

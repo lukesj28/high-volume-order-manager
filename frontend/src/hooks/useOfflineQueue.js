@@ -8,7 +8,7 @@ const MAX_RETRIES = 3
 export function useOfflineQueue() {
   const [pendingCount, setPendingCount] = useState(0)
   const [isSyncing, setIsSyncing] = useState(false)
-  // Track per-order failure counts across flush attempts (keyed by order.id)
+  // per-order retry counts
   const failureCounts = useRef({})
 
   const refreshCount = useCallback(async () => {

@@ -26,7 +26,7 @@ export default function MenuManager() {
     setEditing(item)
     setForm({
       name: item.name,
-      price: item.price.toString(),
+      price: (item.price / 100).toFixed(2),
       displayOrder: item.displayOrder,
       components: item.components?.length
         ? item.components.map(c => ({ componentName: c.componentName, componentQuantity: c.componentQuantity }))
@@ -38,7 +38,7 @@ export default function MenuManager() {
     e.preventDefault()
     const data = {
       name: form.name,
-      price: parseFloat(form.price),
+      price: Math.round(parseFloat(form.price) * 100),
       displayOrder: parseInt(form.displayOrder),
       components: form.components.filter(c => c.componentName.trim())
     }

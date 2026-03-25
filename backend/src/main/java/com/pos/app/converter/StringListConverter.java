@@ -6,7 +6,7 @@ import jakarta.persistence.Converter;
 import java.util.Arrays;
 import java.util.List;
 
-// null stored as SQL NULL means "subscribe to all stations" (no filter applied)
+// null = subscribe to all stations
 @Converter
 public class StringListConverter implements AttributeConverter<List<String>, String> {
 

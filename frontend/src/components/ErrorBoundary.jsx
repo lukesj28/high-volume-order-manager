@@ -1,6 +1,6 @@
 import React from 'react'
 
-// Root-level boundary: full screen error panel
+// Root boundary
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
@@ -38,7 +38,7 @@ export default class ErrorBoundary extends React.Component {
   }
 }
 
-// Route-level boundary: inline error that doesn't take down other routes
+// Route boundary
 export class RouteErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
@@ -74,7 +74,7 @@ export class RouteErrorBoundary extends React.Component {
   }
 }
 
-// Card-level boundary: tiny inline fallback so one bad card can't break the board
+// Card boundary
 export class CardErrorBoundary extends React.Component {
   constructor(props) {
     super(props)

@@ -95,7 +95,6 @@ public class AdminController {
         sp.setCounterEnabled(dto.counterEnabled());
     }
 
-    // If counter is enabled and a next value is provided, upsert station_counters for the active day
     private void upsertCounterIfNeeded(StationProfile sp, StationProfileDto dto) {
         if (!dto.counterEnabled() || dto.counterNextValue() == null) return;
         if (dto.counterNextValue() < 1)

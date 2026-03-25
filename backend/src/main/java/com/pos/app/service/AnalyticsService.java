@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 @Service
@@ -25,15 +24,15 @@ public class AnalyticsService {
 
         List<Object[]> stationData = orderRepository.revenueByStation(dayId);
 
-        BigDecimal totalRevenue = BigDecimal.ZERO;
+        long totalRevenue = 0;
         int totalOrders = 0;
         List<Map<String, Object>> byStation = new ArrayList<>();
 
         for (Object[] row : stationData) {
             String station = (String) row[0];
             long count = ((Number) row[1]).longValue();
-            BigDecimal revenue = (BigDecimal) row[2];
-            totalRevenue = totalRevenue.add(revenue);
+            long revenue = ((Number) row[2]).longValue();
+            totalRevenue += revenue;
             totalOrders += count;
             byStation.add(Map.of(
                     "station", station,
@@ -74,9 +73,8 @@ public class AnalyticsService {
         return eventDayRepository.findAllOrderByOpenedAtDesc().stream()
                 .map(day -> {
                     List<Object[]> stationData = orderRepository.revenueByStation(day.getId());
-                    BigDecimal revenue = stationData.stream()
-                            .map(r -> (BigDecimal) r[2])
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    long revenue = stationData.stream()
+                            .mapToLong(r -> ((Number) r[2]).longValue()).sum();
                     long orders = stationData.stream().mapToLong(r -> ((Number) r[1]).longValue()).sum();
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("dayId", day.getId());
@@ -104,13 +102,13 @@ public class AnalyticsService {
                 .filter(d -> d.getOpenedAt().toString().startsWith(String.valueOf(year)))
                 .toList();
 
-        BigDecimal totalRevenue = BigDecimal.ZERO;
+        long totalRevenue = 0;
         long totalOrders = 0;
 
         for (EventDay day : yearDays) {
             List<Object[]> stationData = orderRepository.revenueByStation(day.getId());
             for (Object[] row : stationData) {
-                totalRevenue = totalRevenue.add((BigDecimal) row[2]);
+                totalRevenue += ((Number) row[2]).longValue();
                 totalOrders += ((Number) row[1]).longValue();
             }
         }

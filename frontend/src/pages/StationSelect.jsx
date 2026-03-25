@@ -9,7 +9,7 @@ export default function StationSelect() {
   const setStationAuth = useAuthStore(s => s.setStationAuth)
   const navigate = useNavigate()
 
-  // Always fetch fresh profiles so displayConfig changes take effect without re-login
+  // always refetch so displayConfig changes take effect without re-login
   const { data: profiles = [], isLoading, error } = useQuery({
     queryKey: ['station-profiles'],
     queryFn: getStationProfiles,

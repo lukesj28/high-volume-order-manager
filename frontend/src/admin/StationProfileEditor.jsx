@@ -20,7 +20,7 @@ function moveItem(arr, index, dir) {
   return out
 }
 
-// Streams helpers: internal form uses strings, DB uses arrays/null
+// form uses strings; DB uses arrays/null
 const streamsToForm = (streams) => {
   if (!streams || streams.length === 0) return [{ label: '', stationNames: '' }]
   return streams.map(s => ({

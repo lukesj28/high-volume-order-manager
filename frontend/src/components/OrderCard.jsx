@@ -4,7 +4,7 @@ import { updateStatus } from '../api/orders'
 import { useOrdersStore } from '../store/ordersStore'
 import { useAuthStore } from '../store/authStore'
 import { canTransition, requiresConfirmation } from '../utils/stateMachine'
-import { formatCAD, formatTime } from '../utils/formatters'
+import { formatCAD, formatTime, calcTax } from '../utils/formatters'
 import ConfirmModal from './ConfirmModal'
 
 const orderLabel = (order) =>
@@ -47,6 +47,7 @@ export default function OrderCard({ order }) {
   }
 
   const isActionable = !!nextState && !mutation.isPending
+  const taxAmount = calcTax(order.totalPrice, order.taxRateBps)
 
   return (
     <>
@@ -90,10 +91,9 @@ export default function OrderCard({ order }) {
           ))}
         </ul>
 
-        <div className="flex justify-end pt-1">
-          <span className="text-sm font-mono font-bold text-zinc-500">
-            {formatCAD(order.totalPrice)}
-          </span>
+        <div className="flex justify-end items-baseline gap-2 pt-1">
+          <span className="text-xs font-mono text-zinc-600">+{formatCAD(taxAmount)} tax</span>
+          <span className="text-sm font-mono font-bold text-zinc-500">{formatCAD(order.totalPrice + taxAmount)}</span>
         </div>
       </div>
 

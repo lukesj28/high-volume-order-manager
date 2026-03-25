@@ -15,7 +15,7 @@ export const useAuthStore = create(
         set(state => ({
           token,
           stationProfile,
-          // Keep cached list up to date so re-selecting a station uses fresh config
+          // keep profiles fresh for station re-select
           stationProfiles: state.stationProfiles.map(p =>
             p.id === stationProfile.id ? stationProfile : p
           )

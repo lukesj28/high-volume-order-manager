@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore'
 import { useOrdersStore } from '../store/ordersStore'
 import { useDayStore } from '../store/dayStore'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
-import { formatCAD } from '../utils/formatters'
+import { formatCAD, calcTax } from '../utils/formatters'
 import OrderList from '../components/OrderList'
 
 const APP_OPTIONS = ['Uber Eats', 'DoorDash', 'SkipTheDishes', 'Ritual']
@@ -180,12 +180,23 @@ function CartItemsList({ cartItems, className }) {
   )
 }
 
-function CartActions({ total, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, alwaysShowClear = true }) {
+function CartActions({ subtotal, taxAmount, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, alwaysShowClear = true }) {
+  const total = subtotal + taxAmount
   return (
     <>
-      <div className="flex justify-between items-baseline mb-3">
-        <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Total</span>
-        <span className="text-blue-200 font-mono font-bold text-2xl">{formatCAD(total)}</span>
+      <div className="space-y-0.5 mb-3">
+        <div className="flex justify-between items-baseline">
+          <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Subtotal</span>
+          <span className="text-zinc-400 font-mono text-sm">{formatCAD(subtotal)}</span>
+        </div>
+        <div className="flex justify-between items-baseline">
+          <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Tax</span>
+          <span className="text-zinc-400 font-mono text-sm">{formatCAD(taxAmount)}</span>
+        </div>
+        <div className="flex justify-between items-baseline pt-1 border-t border-zinc-800">
+          <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Total</span>
+          <span className="text-blue-200 font-mono font-bold text-2xl">{formatCAD(total)}</span>
+        </div>
       </div>
       <button
         className="btn-primary w-full py-3.5 text-base"
@@ -210,13 +221,13 @@ function CartActions({ total, itemCount, isPending, lastSubmitted, isError, erro
   )
 }
 
-function OrderPreview({ cartItems, total, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, sidebar = false }) {
+function OrderPreview({ cartItems, subtotal, taxAmount, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, sidebar = false }) {
   if (sidebar) {
     return (
       <>
         <CartItemsList cartItems={cartItems} className="flex-1 overflow-y-auto min-h-0 space-y-1.5" />
         <div className="flex-shrink-0 pt-3 border-t border-zinc-800 space-y-2">
-          <CartActions {...{ total, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, alwaysShowClear: false }} />
+          <CartActions {...{ subtotal, taxAmount, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, alwaysShowClear: false }} />
         </div>
       </>
     )
@@ -225,7 +236,7 @@ function OrderPreview({ cartItems, total, itemCount, isPending, lastSubmitted, i
     <div className="flex-shrink-0 border-t border-zinc-800 pt-3 space-y-2">
       <CartItemsList cartItems={cartItems} className="h-36 overflow-y-auto space-y-1.5" />
       <div className="border-t border-zinc-800/60 pt-2 space-y-2">
-        <CartActions {...{ total, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear }} />
+        <CartActions {...{ subtotal, taxAmount, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear }} />
       </div>
     </div>
   )
@@ -248,13 +259,14 @@ export default function POS() {
 
   const streams = stationProfile?.displayConfig?.streams ?? [{ label: null, stationNames: null }]
   const submitFields = stationProfile?.displayConfig?.submitFields ?? []
-  const defaultPickupOffset = activeDay?.defaultPickupOffsetMinutes ?? 10
+  const defaultPickupOffset = activeDay?.defaultPickupOffsetMinutes ?? 15
 
   const cartItems = menu
     .filter(item => (cart[item.id] ?? 0) > 0)
     .map(item => ({ ...item, qty: cart[item.id] }))
 
-  const total = cartItems.reduce((sum, item) => sum + parseFloat(item.price) * item.qty, 0)
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0)
+  const taxAmount = activeDay ? calcTax(subtotal, activeDay.taxRateBps) : 0
   const itemCount = cartItems.reduce((sum, item) => sum + item.qty, 0)
 
   const setItemQty = (itemId, qty) => {
@@ -295,7 +307,7 @@ export default function POS() {
   }
 
   const previewProps = {
-    cartItems, total, itemCount,
+    cartItems, subtotal, taxAmount, itemCount,
     isPending: mutation.isPending,
     lastSubmitted,
     isError: mutation.isError,

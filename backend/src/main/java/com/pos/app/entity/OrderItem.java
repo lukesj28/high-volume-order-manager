@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -29,6 +28,6 @@ public class OrderItem {
 
     private int quantity;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal unitPrice; // Price snapshot at order time
+    @Column(nullable = false)
+    private int unitPrice;
 }

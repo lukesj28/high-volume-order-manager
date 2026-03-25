@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +17,11 @@ import java.util.UUID;
 public class PosOrder {
 
     @Id
-    private UUID id; // Set by client (UUID v4)
+    private UUID id;
 
-    private int ticketNumber; // Internal only — not shown to users
+    private int ticketNumber;
 
-    private Integer streamTicketNumber; // Counter-enabled stations only — shown as #N to users
+    private Integer streamTicketNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_day_id", nullable = false)
@@ -39,16 +38,19 @@ public class PosOrder {
     private String pickupName;
     private String sourceApp;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalPrice;
+    @Column(nullable = false)
+    private int totalPrice;
 
     @Column(nullable = false)
-    private Instant createdAt; // Client timestamp
+    private int taxRateBps;
+
+    @Column(nullable = false)
+    private Instant createdAt;
 
     @Column(nullable = false)
     private Instant pickupTime;
 
-    private Instant syncedAt = Instant.now(); // Server receipt timestamp
+    private Instant syncedAt = Instant.now();
     private Instant completedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

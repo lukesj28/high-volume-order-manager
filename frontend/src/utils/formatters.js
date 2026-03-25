@@ -1,5 +1,7 @@
-export const formatCAD = (amount) =>
-  new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount ?? 0)
+export const formatCAD = (cents) =>
+  new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format((cents ?? 0) / 100)
+
+export const calcTax = (subtotal, taxRateBps) => Math.round(subtotal * taxRateBps / 10000)
 
 export const formatTime = (iso) =>
   iso ? new Date(iso).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' }) : ''

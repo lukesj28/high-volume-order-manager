@@ -34,6 +34,7 @@ public class EventDay {
 
     private boolean isActive = true;
 
-    private int defaultPickupOffsetMinutes = 10;
+    private int defaultPickupOffsetMinutes = 15;
     private int pickupSlotIntervalMinutes = 15;
+    private int taxRateBps = 1300;
 }

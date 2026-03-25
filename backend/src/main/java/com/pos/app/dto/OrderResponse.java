@@ -2,34 +2,34 @@ package com.pos.app.dto;
 
 import com.pos.app.entity.PosOrder;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 public record OrderResponse(
         UUID id,
-        int ticketNumber, // Internal only
-        Integer streamTicketNumber, // Counter-enabled stations only
+        int ticketNumber,
+        Integer streamTicketNumber,
         String stationName,
         UUID stationProfileId,
         String status,
         String pickupName,
         String sourceApp,
-        BigDecimal totalPrice,
+        int totalPrice,
+        int taxRateBps,
         Instant createdAt,
         Instant pickupTime,
         Instant syncedAt,
         Instant completedAt,
         List<OrderItemResponse> items,
-        String type // WS message type: ORDER_CREATED | ORDER_UPDATED
+        String type // ORDER_CREATED | ORDER_UPDATED
 ) {
     public record OrderItemResponse(
             UUID id,
             UUID menuItemId,
             String menuItemName,
             int quantity,
-            BigDecimal unitPrice
+            int unitPrice
     ) {}
 
     public static OrderResponse from(PosOrder order, String type) {
@@ -52,6 +52,7 @@ public record OrderResponse(
                 order.getPickupName(),
                 order.getSourceApp(),
                 order.getTotalPrice(),
+                order.getTaxRateBps(),
                 order.getCreatedAt(),
                 order.getPickupTime(),
                 order.getSyncedAt(),

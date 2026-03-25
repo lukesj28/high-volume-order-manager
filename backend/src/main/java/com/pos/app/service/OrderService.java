@@ -15,7 +15,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -50,7 +49,7 @@ public class OrderService {
             return OrderResponse.from(existing, "ORDER_CREATED");
         }
 
-        // Assign ticket numbers inside transaction (race-condition safe)
+        // ticket numbers: race-condition safe via DB function
         int ticketNumber = orderRepository.getNextTicketNumber(day.getId());
         Integer streamTicketNumber = null;
         if (station.isCounterEnabled()) {
@@ -73,8 +72,9 @@ public class OrderService {
                 : request.createdAt().plus(day.getDefaultPickupOffsetMinutes(), ChronoUnit.MINUTES);
         order.setPickupTime(pickupTime);
         order.setSyncedAt(Instant.now());
+        order.setTaxRateBps(day.getTaxRateBps());
 
-        BigDecimal total = BigDecimal.ZERO;
+        int total = 0;
         for (OrderRequest.OrderItemRequest itemReq : request.items()) {
             MenuItem menuItem = menuItemRepository.findById(itemReq.menuItemId())
                     .orElseThrow(() -> AppException.notFound("Menu item not found: " + itemReq.menuItemId()));
@@ -85,7 +85,7 @@ public class OrderService {
             orderItem.setQuantity(itemReq.quantity());
             orderItem.setUnitPrice(menuItem.getPrice());
             order.getItems().add(orderItem);
-            total = total.add(menuItem.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity())));
+            total += menuItem.getPrice() * itemReq.quantity();
         }
         order.setTotalPrice(total);
 

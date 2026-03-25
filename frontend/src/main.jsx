@@ -11,11 +11,11 @@ const queryClient = new QueryClient({
     queries: {
       retry: 2,
       staleTime: 30_000,
-      // Never let a failed query throw uncaught — surface as query state instead
+      // surface errors as query state, not exceptions
       throwOnError: false,
     },
     mutations: {
-      // Mutations: don't throw globally, let each call site handle errors
+      // let call sites handle errors
       throwOnError: false,
     },
   },
@@ -25,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <App />
-      {/* Global toast portal — available on login/station-select before Layout mounts */}
+      {/* global toast portal */}
       <Toast />
     </QueryClientProvider>
   </ErrorBoundary>

@@ -55,6 +55,13 @@ public class EventDayController {
             day.setDefaultPickupOffsetMinutes(body.get("defaultPickupOffsetMinutes"));
         if (body.containsKey("pickupSlotIntervalMinutes"))
             day.setPickupSlotIntervalMinutes(body.get("pickupSlotIntervalMinutes"));
+        if (body.containsKey("taxRateBps")) {
+            int bps = body.get("taxRateBps");
+            if (bps < 0) throw AppException.badRequest("Tax rate cannot be negative");
+            day.setTaxRateBps(bps);
+        }
+        if (day.getDefaultPickupOffsetMinutes() < day.getPickupSlotIntervalMinutes())
+            throw AppException.badRequest("Pickup offset cannot be smaller than the slot interval (" + day.getPickupSlotIntervalMinutes() + " min)");
         return ResponseEntity.ok(eventDayRepository.save(day));
     }
 }
