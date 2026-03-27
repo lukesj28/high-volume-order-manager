@@ -12,6 +12,7 @@ public record OrderRequest(
         @NotEmpty List<OrderItemRequest> items,
         String pickupName,
         String sourceApp,
+        String targetStation,
         @NotNull Instant createdAt,
         Instant pickupTime
 ) {

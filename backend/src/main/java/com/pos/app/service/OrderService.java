@@ -66,6 +66,7 @@ public class OrderService {
         order.setStationProfile(station);
         order.setPickupName(request.pickupName());
         order.setSourceApp(request.sourceApp());
+        order.setTargetStationName(request.targetStation());
         order.setCreatedAt(request.createdAt());
         Instant pickupTime = request.pickupTime() != null
                 ? request.pickupTime()

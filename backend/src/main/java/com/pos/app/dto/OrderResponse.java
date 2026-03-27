@@ -46,7 +46,9 @@ public record OrderResponse(
                 order.getId(),
                 order.getTicketNumber(),
                 order.getStreamTicketNumber(),
-                order.getStationProfile().getName(),
+                order.getTargetStationName() != null
+                        ? order.getTargetStationName()
+                        : order.getStationProfile().getName(),
                 order.getStationProfile().getId(),
                 order.getStatus().name(),
                 order.getPickupName(),

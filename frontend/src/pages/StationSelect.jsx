@@ -7,6 +7,7 @@ import { getStationProfiles, selectStation } from '../api/auth'
 export default function StationSelect() {
   const user = useAuthStore(s => s.user)
   const setStationAuth = useAuthStore(s => s.setStationAuth)
+  const clearAuth = useAuthStore(s => s.clearAuth)
   const navigate = useNavigate()
 
   // always refetch so displayConfig changes take effect without re-login
@@ -20,6 +21,10 @@ export default function StationSelect() {
     onSuccess: ({ data, profile }) => {
       setStationAuth(data.token, profile)
       navigate('/pos')
+    },
+    onError: () => {
+      clearAuth()
+      navigate('/login')
     }
   })
 

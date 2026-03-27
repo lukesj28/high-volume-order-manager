@@ -2,7 +2,7 @@
 INSERT INTO station_profiles (name, can_submit, can_set_in_progress, can_set_completed, can_skip_to_completed, subscribe_to_stations, display_config, display_order) VALUES
 (
     'Front Window', true, false, true, true,
-    'Front Window,App',
+    'Front Window',
     '{"showCompleted": true, "completedDisplay": "collapsed", "orderGroups": ["PENDING", "IN_PROGRESS", "COMPLETED"]}',
     1
 ),

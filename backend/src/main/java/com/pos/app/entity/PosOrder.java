@@ -37,6 +37,7 @@ public class PosOrder {
 
     private String pickupName;
     private String sourceApp;
+    private String targetStationName;
 
     @Column(nullable = false)
     private int totalPrice;

@@ -20,7 +20,8 @@ public interface OrderRepository extends JpaRepository<PosOrder, UUID> {
     List<PosOrder> findAllByEventDay(@Param("dayId") UUID dayId);
 
     @Query("SELECT DISTINCT o FROM PosOrder o JOIN FETCH o.items i JOIN FETCH i.menuItem " +
-           "WHERE o.eventDay.id = :dayId AND o.stationProfile.name IN :stationNames " +
+           "WHERE o.eventDay.id = :dayId " +
+           "AND COALESCE(o.targetStationName, o.stationProfile.name) IN :stationNames " +
            "ORDER BY o.ticketNumber ASC")
     List<PosOrder> findByEventDayAndStations(
             @Param("dayId") UUID dayId,

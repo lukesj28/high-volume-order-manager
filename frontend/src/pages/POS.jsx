@@ -78,9 +78,10 @@ function timeValueToISOToday(timeValue) {
   return d.toISOString()
 }
 
-function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel }) {
+function SubmitModal({ submitFields, streamOptions, defaultPickupOffset, onConfirm, onCancel }) {
   const [name, setName] = useState('')
   const [app, setApp] = useState('')
+  const [stream, setStream] = useState(null)
   const [pickupTime, setPickupTime] = useState(() => defaultPickupTimeValue(defaultPickupOffset))
 
   const handleConfirm = () => {
@@ -88,6 +89,7 @@ function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel })
       pickupName: name.trim() || null,
       sourceApp: app || null,
       pickupTime: timeValueToISOToday(pickupTime),
+      targetStation: stream,
     })
   }
 
@@ -134,6 +136,27 @@ function SubmitModal({ submitFields, defaultPickupOffset, onConfirm, onCancel })
                       : 'border-slate-600 bg-slate-800 text-slate-300 hover:border-slate-400 hover:text-white'}`}
                 >
                   {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {submitFields.includes('stream') && (
+          <div>
+            <label className="label">Route to</label>
+            <div className="flex gap-2 mt-1">
+              {streamOptions.map(opt => (
+                <button
+                  key={opt.station}
+                  type="button"
+                  onClick={() => setStream(stream === opt.station ? null : opt.station)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all
+                    ${stream === opt.station
+                      ? 'border-blue-500 bg-blue-600/20 text-white'
+                      : 'border-slate-600 bg-slate-800 text-slate-300 hover:border-slate-400 hover:text-white'}`}
+                >
+                  {opt.label}
                 </button>
               ))}
             </div>
@@ -259,6 +282,7 @@ export default function POS() {
 
   const streams = stationProfile?.displayConfig?.streams ?? [{ label: null, stationNames: null }]
   const submitFields = stationProfile?.displayConfig?.submitFields ?? []
+  const streamOptions = stationProfile?.displayConfig?.streamOptions ?? []
   const defaultPickupOffset = activeDay?.defaultPickupOffsetMinutes ?? 15
 
   const cartItems = menu
@@ -290,13 +314,13 @@ export default function POS() {
     }
   })
 
-  const doSubmit = ({ pickupName = null, sourceApp = null, pickupTime = null } = {}) => {
+  const doSubmit = ({ pickupName = null, sourceApp = null, pickupTime = null, targetStation = null } = {}) => {
     if (itemCount === 0) return
     if (!activeDay) { alert('No active day. Ask staff to open the day first.'); return }
     mutation.mutate({
       id: crypto.randomUUID(),
       items: cartItems.map(({ id, qty }) => ({ menuItemId: id, quantity: qty })),
-      pickupName, sourceApp, pickupTime,
+      pickupName, sourceApp, pickupTime, targetStation,
       createdAt: new Date().toISOString()
     })
   }
@@ -369,6 +393,7 @@ export default function POS() {
         {showModal && (
           <SubmitModal
             submitFields={submitFields}
+            streamOptions={streamOptions}
             defaultPickupOffset={defaultPickupOffset}
             onConfirm={details => { setShowModal(false); doSubmit(details) }}
             onCancel={() => setShowModal(false)}
@@ -400,6 +425,7 @@ export default function POS() {
       {showModal && (
         <SubmitModal
           submitFields={submitFields}
+          streamOptions={streamOptions}
           defaultPickupOffset={defaultPickupOffset}
           onConfirm={details => { setShowModal(false); doSubmit(details) }}
           onCancel={() => setShowModal(false)}

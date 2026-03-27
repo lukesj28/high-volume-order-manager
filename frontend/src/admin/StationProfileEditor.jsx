@@ -4,9 +4,9 @@ import { getStationProfiles, createStationProfile, updateStationProfile, deleteS
 
 const EMPTY = {
   name: '', canSubmit: false, canSetInProgress: false, canSetCompleted: false,
-  canSkipToCompleted: false, subscribeToStations: [], displayConfig: {
+  canSkipToCompleted: false, displayConfig: {
     showCompleted: true, completedDisplay: 'collapsed', orderGroups: ['PENDING', 'IN_PROGRESS', 'COMPLETED'],
-    submitFields: [], streams: [{ label: '', stationNames: '' }]
+    submitFields: [], streamOptions: [], streams: [{ label: '', stationNames: '' }]
   }, displayOrder: 0, counterEnabled: false, counterNextValue: null
 }
 
@@ -40,8 +40,8 @@ export default function StationProfileEditor() {
   const qc = useQueryClient()
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
-  const [subsText, setSubsText] = useState('')
   const [streamRows, setStreamRows] = useState(EMPTY.displayConfig.streams)
+  const [streamOptionRows, setStreamOptionRows] = useState(EMPTY.displayConfig.streamOptions)
 
   const { data: profiles = [] } = useQuery({ queryKey: ['admin', 'stations'], queryFn: getStationProfiles })
 
@@ -57,27 +57,34 @@ export default function StationProfileEditor() {
   const startEdit = (profile) => {
     setEditing(profile)
     setForm({ ...profile, counterNextValue: profile.counterNextValue ?? null })
-    setSubsText(profile.subscribeToStations?.join(', ') ?? '')
     setStreamRows(streamsToForm(profile.displayConfig?.streams))
+    setStreamOptionRows(profile.displayConfig?.streamOptions ?? [])
   }
 
   const startNew = () => {
     setEditing('new')
     setForm(EMPTY)
-    setSubsText('')
     setStreamRows(EMPTY.displayConfig.streams)
+    setStreamOptionRows(EMPTY.displayConfig.streamOptions)
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const derived = streamRows.flatMap(r =>
+      r.stationNames.trim()
+        ? r.stationNames.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+    )
+    const subscribeToStations = streamRows.every(r => r.stationNames.trim())
+      ? [...new Set(derived)]
+      : null
     const data = {
       ...form,
-      subscribeToStations: subsText.trim()
-        ? subsText.split(',').map(s => s.trim()).filter(Boolean)
-        : null,
+      subscribeToStations,
       displayConfig: {
         ...form.displayConfig,
-        streams: streamsFromForm(streamRows)
+        streams: streamsFromForm(streamRows),
+        streamOptions: streamOptionRows.filter(r => r.label || r.station)
       },
       counterNextValue: form.counterEnabled && form.counterNextValue !== '' ? Number(form.counterNextValue) : null
     }
@@ -127,16 +134,6 @@ export default function StationProfileEditor() {
                 </label>
               ))}
             </div>
-          </div>
-
-          <div>
-            <label className="label">Subscribe to Stations (comma-separated, leave blank for ALL)</label>
-            <input
-              className="input"
-              placeholder="e.g. Phone, App"
-              value={subsText}
-              onChange={e => setSubsText(e.target.value)}
-            />
           </div>
 
           <div>
@@ -267,6 +264,41 @@ export default function StationProfileEditor() {
               ))}
             </div>
             <p className="text-xs text-slate-500 mt-1">Each stream is a column. Blank label = no column header. Blank stations = show all.</p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="label">Stream Options (submit routing)</p>
+              <button
+                type="button"
+                className="btn-ghost text-xs py-0.5 px-2"
+                onClick={() => setStreamOptionRows(r => [...r, { label: '', station: '' }])}
+              >+ Add option</button>
+            </div>
+            <p className="text-xs text-slate-500 mb-2">Buttons shown in submit modal when "stream" is a submit field — each routes the order to the specified station</p>
+            <div className="space-y-2">
+              {streamOptionRows.map((row, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                  <input
+                    className="input flex-1"
+                    placeholder="Label (e.g. Phone)"
+                    value={row.label}
+                    onChange={e => setStreamOptionRows(r => r.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
+                  />
+                  <input
+                    className="input flex-1"
+                    placeholder="Station name (e.g. Phone)"
+                    value={row.station}
+                    onChange={e => setStreamOptionRows(r => r.map((x, j) => j === i ? { ...x, station: e.target.value } : x))}
+                  />
+                  <button
+                    type="button"
+                    className="btn-danger text-xs py-1 px-2"
+                    onClick={() => setStreamOptionRows(r => r.filter((_, j) => j !== i))}
+                  >×</button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex gap-2">
