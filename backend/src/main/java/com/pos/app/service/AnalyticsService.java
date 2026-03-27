@@ -1,10 +1,13 @@
 package com.pos.app.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pos.app.entity.EventDay;
 import com.pos.app.exception.AppException;
 import com.pos.app.repository.EventDayRepository;
 import com.pos.app.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,10 +15,12 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AnalyticsService {
 
     private final OrderRepository orderRepository;
     private final EventDayRepository eventDayRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional(readOnly = true)
     public Map<String, Object> getDaySummary(UUID dayId) {
@@ -85,6 +90,21 @@ public class AnalyticsService {
                     m.put("totalOrders", orders);
                     return m;
                 }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSnapshot(UUID dayId) {
+        EventDay day = eventDayRepository.findById(dayId)
+                .orElseThrow(() -> AppException.notFound("Day not found"));
+        if (day.getSnapshot() == null) {
+            throw AppException.notFound("No snapshot for this day (was it closed before this feature was added?)");
+        }
+        try {
+            return objectMapper.readValue(day.getSnapshot(), new TypeReference<>() {});
+        } catch (Exception e) {
+            log.error("Failed to parse snapshot for day {}", dayId, e);
+            throw new RuntimeException("Failed to parse snapshot", e);
+        }
     }
 
     @Transactional(readOnly = true)

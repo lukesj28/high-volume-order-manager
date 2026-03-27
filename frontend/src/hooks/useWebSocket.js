@@ -19,6 +19,7 @@ export function useWebSocket() {
   const setOrders = useOrdersStore(s => s.setOrders)
   const pruneCompleted = useOrdersStore(s => s.pruneCompleted)
   const setActiveDay = useDayStore(s => s.setActiveDay)
+  const clearDay = useDayStore(s => s.clearDay)
 
   const fetchState = useCallback(async () => {
     try {
@@ -44,13 +45,12 @@ export function useWebSocket() {
   const safeHandleDay = useCallback((msg) => {
     try {
       const event = JSON.parse(msg.body)
-      if (event.type === 'DAY_OPENED' || event.type === 'DAY_CLOSED') {
-        fetchState()
-      }
+      if (event.type === 'DAY_OPENED') fetchState()
+      else if (event.type === 'DAY_CLOSED') clearDay()
     } catch (err) {
       console.error('Failed to process day event message', err, msg?.body)
     }
-  }, [fetchState])
+  }, [fetchState, clearDay])
 
   useEffect(() => {
     if (!token || !stationProfile) return

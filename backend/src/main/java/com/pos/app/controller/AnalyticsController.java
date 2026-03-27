@@ -37,4 +37,9 @@ public class AnalyticsController {
     public ResponseEntity<Map<String, Object>> compare(@RequestParam int year1, @RequestParam int year2) {
         return ResponseEntity.ok(analyticsService.compareYears(year1, year2));
     }
+
+    @GetMapping("/snapshot")
+    public ResponseEntity<Map<String, Object>> snapshot(@RequestParam UUID dayId) {
+        return ResponseEntity.ok(analyticsService.getSnapshot(dayId));
+    }
 }

@@ -30,6 +30,9 @@ public class EventDay {
     @JoinColumn(name = "closed_by")
     private User closedBy;
 
+    @Column(columnDefinition = "TEXT")
+    private String snapshot;
+
     private String label;
 
     private boolean isActive = true;

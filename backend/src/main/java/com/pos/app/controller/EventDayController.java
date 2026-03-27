@@ -29,14 +29,13 @@ public class EventDayController {
     }
 
     @PostMapping("/open")
-    public ResponseEntity<EventDay> open(
-            @AuthenticationPrincipal PosUserDetails user,
-            @RequestBody(required = false) Map<String, String> body) {
-        String label = body != null ? body.get("label") : null;
-        return ResponseEntity.ok(eventDayService.openDay(user.getUserId(), label));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EventDay> open(@AuthenticationPrincipal PosUserDetails user) {
+        return ResponseEntity.ok(eventDayService.openDay(user.getUserId(), null));
     }
 
     @PostMapping("/close")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventDay> close(@AuthenticationPrincipal PosUserDetails user) {
         return ResponseEntity.ok(eventDayService.closeDay(user.getUserId()));
     }

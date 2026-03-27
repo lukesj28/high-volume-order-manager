@@ -23,6 +23,7 @@ public class EventDayService {
     private final EventDayRepository eventDayRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final SnapshotService snapshotService;
 
     public Optional<EventDay> getActiveDay() {
         return eventDayRepository.findByIsActiveTrue();
@@ -50,6 +51,7 @@ public class EventDayService {
                 .orElseThrow(() -> AppException.badRequest("No active day to close."));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> AppException.notFound("User not found"));
+        day.setSnapshot(snapshotService.buildSnapshot(day));
         day.setActive(false);
         day.setClosedAt(Instant.now());
         day.setClosedBy(user);

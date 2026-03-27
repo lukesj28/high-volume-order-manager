@@ -58,5 +58,9 @@ public class PosOrder {
     @JsonManagedReference
     private List<OrderItem> items = new ArrayList<>();
 
+    public String getEffectiveStationName() {
+        return targetStationName != null ? targetStationName : stationProfile.getName();
+    }
+
     public enum OrderStatus { PENDING, IN_PROGRESS, COMPLETED }
 }

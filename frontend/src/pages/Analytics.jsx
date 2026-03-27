@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getHistorical, getDaySummary, getComponents, compareYears } from '../api/analytics'
+import { getHistorical, getDaySummary, getComponents, compareYears, getSnapshot } from '../api/analytics'
 import { formatCAD, formatDateTime } from '../utils/formatters'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -37,6 +37,13 @@ export default function Analytics() {
   })
 
   const activeDayId = selectedDayId ?? historical[0]?.dayId
+  const activeDayClosedAt = historical.find(d => d.dayId === activeDayId)?.closedAt
+
+  const { data: snapshot } = useQuery({
+    queryKey: ['analytics', 'snapshot', activeDayId],
+    queryFn: () => getSnapshot(activeDayId),
+    enabled: !!activeDayId && !!activeDayClosedAt
+  })
 
   return (
     <div className="h-full overflow-y-auto space-y-6 max-w-6xl">
@@ -136,6 +143,54 @@ export default function Analytics() {
                     <span className="font-mono font-bold text-white text-base">{row.total}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {snapshot && (
+            <div className="card space-y-4">
+              <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 border-b border-zinc-800/80 pb-2">System Snapshot</h2>
+              <div className="grid sm:grid-cols-3 gap-3 text-sm">
+                <div className="bg-zinc-900 border border-zinc-800/80 rounded-lg px-4 py-2">
+                  <div className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Tax Rate</div>
+                  <div className="font-mono font-bold text-white">{(snapshot.system.taxRateBps / 100).toFixed(2)}%</div>
+                </div>
+                <div className="bg-zinc-900 border border-zinc-800/80 rounded-lg px-4 py-2">
+                  <div className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Menu Items</div>
+                  <div className="font-mono font-bold text-white">{snapshot.system.menu.length}</div>
+                </div>
+                <div className="bg-zinc-900 border border-zinc-800/80 rounded-lg px-4 py-2">
+                  <div className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Stations</div>
+                  <div className="font-mono font-bold text-white">{snapshot.system.stations.length}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase font-bold tracking-wider text-zinc-500 mb-2">Menu at Close</div>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {snapshot.system.menu.map(item => (
+                    <div key={item.id} className="flex justify-between items-center bg-zinc-900 border border-zinc-800/80 rounded-lg px-3 py-1.5">
+                      <span className={`text-sm font-semibold tracking-wide ${item.active ? 'text-zinc-300' : 'text-zinc-600 line-through'}`}>{item.name}</span>
+                      <span className="font-mono text-sm font-bold text-white">{formatCAD(item.priceCents)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs uppercase font-bold tracking-wider text-zinc-500 mb-2">Station Profiles at Close</div>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {snapshot.system.stations.map(s => (
+                    <div key={s.name} className="bg-zinc-900 border border-zinc-800/80 rounded-lg px-3 py-1.5">
+                      <div className="text-sm font-semibold text-zinc-300 mb-1">{s.name}</div>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {s.canSubmit && <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/30 px-1.5 py-0.5 rounded">Submit</span>}
+                        {s.canSetInProgress && <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded">In Progress</span>}
+                        {s.canSetCompleted && <span className="text-[10px] bg-zinc-500/10 text-zinc-400 border border-zinc-500/30 px-1.5 py-0.5 rounded">Complete</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

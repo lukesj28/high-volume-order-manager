@@ -15,7 +15,7 @@ public interface OrderRepository extends JpaRepository<PosOrder, UUID> {
            "WHERE o.eventDay.id = :dayId AND o.status != 'COMPLETED' ORDER BY o.ticketNumber ASC")
     List<PosOrder> findActiveByEventDay(@Param("dayId") UUID dayId);
 
-    @Query("SELECT DISTINCT o FROM PosOrder o JOIN FETCH o.items i JOIN FETCH i.menuItem " +
+    @Query("SELECT DISTINCT o FROM PosOrder o JOIN FETCH o.items i JOIN FETCH i.menuItem JOIN FETCH o.stationProfile " +
            "WHERE o.eventDay.id = :dayId ORDER BY o.ticketNumber ASC")
     List<PosOrder> findAllByEventDay(@Param("dayId") UUID dayId);
 
