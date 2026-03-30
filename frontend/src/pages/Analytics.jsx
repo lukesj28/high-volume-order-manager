@@ -1,43 +1,41 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getHistorical, getDaySummary, getComponents, compareYears, getSnapshot } from '../api/analytics'
-import { formatCAD, formatDateTime } from '../utils/formatters'
+import { getHistorical, getDaySummary, getComponents, getSnapshot } from '../api/analytics'
+import { formatCAD } from '../utils/formatters'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
 } from 'recharts'
 
 const COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4']
+const AXIS_TICK = { fill: '#71717a', fontSize: 11, fontFamily: 'monospace' }
+const TOOLTIP_STYLE = { background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8, color: '#f4f4f5' }
 
 export default function Analytics() {
   const [selectedDayId, setSelectedDayId] = useState(null)
-  const [year1, setYear1] = useState(new Date().getFullYear())
-  const [year2, setYear2] = useState(new Date().getFullYear() - 1)
 
   const { data: historical = [] } = useQuery({
     queryKey: ['analytics', 'historical'],
     queryFn: getHistorical
   })
 
+  const activeDayId = selectedDayId ?? historical[0]?.dayId
+  const activeDayClosedAt = useMemo(
+    () => historical.find(d => d.dayId === activeDayId)?.closedAt,
+    [historical, activeDayId]
+  )
+
   const { data: summary } = useQuery({
-    queryKey: ['analytics', 'summary', selectedDayId],
-    queryFn: () => getDaySummary(selectedDayId),
-    enabled: !!selectedDayId
+    queryKey: ['analytics', 'summary', activeDayId],
+    queryFn: () => getDaySummary(activeDayId),
+    enabled: !!activeDayId
   })
 
   const { data: components = [] } = useQuery({
-    queryKey: ['analytics', 'components', selectedDayId],
-    queryFn: () => getComponents(selectedDayId),
-    enabled: !!selectedDayId
+    queryKey: ['analytics', 'components', activeDayId],
+    queryFn: () => getComponents(activeDayId),
+    enabled: !!activeDayId
   })
-
-  const { data: comparison } = useQuery({
-    queryKey: ['analytics', 'compare', year1, year2],
-    queryFn: () => compareYears(year1, year2)
-  })
-
-  const activeDayId = selectedDayId ?? historical[0]?.dayId
-  const activeDayClosedAt = historical.find(d => d.dayId === activeDayId)?.closedAt
 
   const { data: snapshot } = useQuery({
     queryKey: ['analytics', 'snapshot', activeDayId],
@@ -45,8 +43,18 @@ export default function Analytics() {
     enabled: !!activeDayId && !!activeDayClosedAt
   })
 
+  const yearlyData = useMemo(() => Object.values(
+    historical.reduce((acc, d) => {
+      const year = new Date(d.openedAt).getFullYear()
+      if (!acc[year]) acc[year] = { year, revenue: 0, orders: 0 }
+      acc[year].revenue += d.grandTotal
+      acc[year].orders += d.totalOrders
+      return acc
+    }, {})
+  ).sort((a, b) => a.year - b.year).slice(-5), [historical])
+
   return (
-    <div className="h-full overflow-y-auto space-y-6 max-w-6xl">
+    <div className="h-full overflow-y-auto space-y-6">
       <h1 className="text-2xl font-black text-white tracking-wide">System Analytics</h1>
 
       <div className="card">
@@ -59,77 +67,101 @@ export default function Analytics() {
           <option value="">— Select a day —</option>
           {historical.map(d => (
             <option key={d.dayId} value={d.dayId}>
-              {d.label} ({formatCAD(d.totalRevenue)}, {d.totalOrders} orders)
+              {d.label} ({formatCAD(d.grandTotal)}, {d.totalOrders} orders)
             </option>
           ))}
         </select>
       </div>
 
       {summary && (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <SummaryCard label="Total Revenue" value={formatCAD(summary.totalRevenue)} />
-            <SummaryCard label="Total Orders" value={summary.totalOrders} />
-            <SummaryCard label="Opened" value={formatDateTime(summary.openedAt)} />
-            <SummaryCard label="Closed" value={summary.closedAt ? formatDateTime(summary.closedAt) : 'Still open'} />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="card text-center">
+            <div className="text-xs text-zinc-400 font-semibold uppercase tracking-wider mb-1">Total</div>
+            <div className="text-xl font-mono font-bold text-white">{formatCAD(summary.total)}</div>
+            <div className="text-xs text-zinc-500 font-mono mt-1">{formatCAD(summary.subtotal)} + {formatCAD(summary.tax)} tax</div>
           </div>
+          <SummaryCard label="Orders" value={summary.totalOrders} />
+        </div>
+      )}
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="card">
-              <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Revenue by Station</h2>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={summary.byStation}
-                    dataKey="revenue"
-                    nameKey="station"
-                    cx="50%" cy="50%"
-                    outerRadius={80}
-                    label={({ station, percent }) => `${station} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {summary.byStation.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+      {yearlyData.length > 0 && (
+        <div className="grid sm:grid-cols-2 gap-4">
+          <YearlyLineChart
+            title="5-Year Revenue"
+            dataKey="revenue"
+            colorIndex={0}
+            data={yearlyData}
+            formatValue={v => formatCAD(v).replace('.00', '')}
+          />
+          <YearlyLineChart
+            title="5-Year Orders"
+            dataKey="orders"
+            colorIndex={2}
+            data={yearlyData}
+          />
+        </div>
+      )}
+
+      {summary && (
+        <>
+          {summary.byStream?.length > 0 && (
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="card">
+                <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Revenue by Stream</h2>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={summary.byStream}
+                      dataKey="total"
+                      nameKey="stream"
+                      cx="50%" cy="50%"
+                      outerRadius={80}
+                      label={({ stream, percent }) => `${stream} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {summary.byStream.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v) => formatCAD(v)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="card">
+                <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Orders by Stream</h2>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-zinc-500 text-xs uppercase tracking-wider border-b border-zinc-800/80">
+                      <th className="text-left pb-2 font-semibold">Stream</th>
+                      <th className="text-right pb-2 font-semibold">Orders</th>
+                      <th className="text-right pb-2 font-semibold">Subtotal</th>
+                      <th className="text-right pb-2 font-semibold">Tax</th>
+                      <th className="text-right pb-2 font-semibold">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.byStream.map((row, i) => (
+                      <tr key={row.stream} className="border-b border-zinc-800/40 last:border-0">
+                        <td className="py-2 flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORS[i % COLORS.length] }} />
+                          <span className="text-zinc-300 font-semibold tracking-wide">{row.stream}</span>
+                        </td>
+                        <td className="py-2 text-right font-mono font-bold text-white">{row.orderCount}</td>
+                        <td className="py-2 text-right font-mono text-zinc-400">{formatCAD(row.subtotal)}</td>
+                        <td className="py-2 text-right font-mono text-zinc-400">{formatCAD(row.tax)}</td>
+                        <td className="py-2 text-right font-mono font-bold text-white">{formatCAD(row.total)}</td>
+                      </tr>
                     ))}
-                  </Pie>
-                  <Tooltip formatter={(v) => formatCAD(v)} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="card">
-              <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Orders by Station</h2>
-              <div className="space-y-2">
-                {summary.byStation.map((row, i) => (
-                  <div key={row.station} className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-md" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="flex-1 text-zinc-300 text-sm font-semibold tracking-wide">{row.station}</span>
-                    <span className="text-white font-mono font-bold">{row.orderCount}</span>
-                    <span className="text-zinc-500 font-mono text-sm w-24 text-right">{formatCAD(row.revenue)}</span>
-                  </div>
-                ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
+          )}
 
           {summary.hourly?.length > 0 && (
             <div className="card">
               <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">Hourly Order Volume</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={summary.hourly}>
-                  <XAxis
-                    dataKey="hour"
-                    tickFormatter={h => `${h}:00`}
-                    stroke="#71717a"
-                    tick={{ fill: '#71717a', fontSize: 11, fontFamily: 'monospace' }}
-                  />
-                  <YAxis stroke="#71717a" tick={{ fill: '#71717a', fontSize: 11, fontFamily: 'monospace' }} />
-                  <Tooltip
-                    labelFormatter={h => `${h}:00`}
-                    contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8, color: '#f4f4f5' }}
-                  />
-                  <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <HourlyHeatmap hourly={summary.hourly} />
             </div>
           )}
 
@@ -196,32 +228,6 @@ export default function Analytics() {
           )}
         </>
       )}
-
-      <div className="card space-y-4">
-        <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 border-b border-zinc-800/80 pb-2">Year-over-Year Comparison</h2>
-        <div className="flex gap-3 flex-wrap">
-          <div>
-            <label className="label">Year 1</label>
-            <input type="number" className="input w-28" value={year1} onChange={e => setYear1(+e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Year 2</label>
-            <input type="number" className="input w-28" value={year2} onChange={e => setYear2(+e.target.value)} />
-          </div>
-        </div>
-
-        {comparison && (
-          <div className="grid sm:grid-cols-2 gap-4">
-            {[comparison.year1, comparison.year2].map(y => (
-              <div key={y.year} className="bg-zinc-900 border border-zinc-800/80 rounded-xl p-5 space-y-2">
-                <h3 className="text-sm tracking-widest uppercase font-black text-zinc-500">{y.year}</h3>
-                <div className="text-3xl font-mono font-black text-blue-500">{formatCAD(y.totalRevenue)}</div>
-                <div className="text-zinc-400 text-xs font-medium tracking-wide">{y.totalOrders} orders / {y.eventCount} event{y.eventCount !== 1 ? 's' : ''}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   )
 }
@@ -234,3 +240,48 @@ function SummaryCard({ label, value }) {
     </div>
   )
 }
+
+function YearlyLineChart({ title, dataKey, colorIndex, data, formatValue }) {
+  const color = COLORS[colorIndex]
+  return (
+    <div className="card">
+      <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">{title}</h2>
+      <ResponsiveContainer width="100%" height={200}>
+        <LineChart data={data}>
+          <XAxis dataKey="year" stroke="#71717a" tick={AXIS_TICK} />
+          <YAxis stroke="#71717a" tick={AXIS_TICK} tickFormatter={formatValue} />
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
+            formatter={formatValue}
+            labelFormatter={year => `Year: ${year}`}
+          />
+          <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={{ fill: color, r: 4 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+const HourlyHeatmap = React.memo(function HourlyHeatmap({ hourly }) {
+  const maxCount = Math.max(...hourly.map(h => h.count))
+  const hourMap = Object.fromEntries(hourly.map(h => [h.hour, h.count]))
+
+  return (
+    <div className="grid grid-cols-12 gap-2">
+      {Array.from({ length: 24 }, (_, i) => i).map(hour => {
+        const count = hourMap[hour] ?? 0
+        const intensity = maxCount > 0 ? count / maxCount : 0
+        return (
+          <div
+            key={hour}
+            className="rounded-lg flex flex-col items-center justify-center py-2"
+            style={{ opacity: 0.15 + intensity * 0.85, background: '#3b82f6' }}
+          >
+            <div className="text-white text-xs font-mono font-bold">{hour}:00</div>
+            <div className="text-white text-sm font-mono font-black">{count}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+})

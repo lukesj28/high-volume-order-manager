@@ -44,11 +44,25 @@ public interface OrderRepository extends JpaRepository<PosOrder, UUID> {
     List<Object[]> countOrdersByHourNative(@Param("dayId") UUID dayId);
 
     @Query(value =
-           "SELECT sp.name as station, COUNT(o.id) as order_count, COALESCE(SUM(o.total_price), 0) as revenue " +
+           "SELECT sp.name as station, COUNT(o.id) as order_count, " +
+           "COALESCE(SUM(o.total_price), 0) as subtotal, " +
+           "COALESCE(SUM(ROUND(o.total_price * o.tax_rate_bps / 10000.0)), 0) as tax " +
            "FROM orders o JOIN station_profiles sp ON sp.id = o.station_profile_id " +
            "WHERE o.event_day_id = :dayId GROUP BY sp.name",
            nativeQuery = true)
     List<Object[]> revenueByStation(@Param("dayId") UUID dayId);
+
+    @Query(value =
+           "SELECT COALESCE(o.source_app, COALESCE(o.target_station_name, sp.name)) as stream, " +
+           "COUNT(o.id) as order_count, " +
+           "COALESCE(SUM(o.total_price), 0) as subtotal, " +
+           "COALESCE(SUM(ROUND(o.total_price * o.tax_rate_bps / 10000.0)), 0) as tax " +
+           "FROM orders o JOIN station_profiles sp ON sp.id = o.station_profile_id " +
+           "WHERE o.event_day_id = :dayId " +
+           "GROUP BY COALESCE(o.source_app, COALESCE(o.target_station_name, sp.name)) " +
+           "ORDER BY subtotal DESC",
+           nativeQuery = true)
+    List<Object[]> revenueByStream(@Param("dayId") UUID dayId);
 
     @Query(value =
            "SELECT mic.component_name, SUM(oi.quantity * mic.component_quantity) as total " +

@@ -27,22 +27,27 @@ public class AnalyticsService {
         EventDay day = eventDayRepository.findById(dayId)
                 .orElseThrow(() -> AppException.notFound("Day not found"));
 
-        List<Object[]> stationData = orderRepository.revenueByStation(dayId);
+        List<Object[]> streamData = orderRepository.revenueByStream(dayId);
 
-        long totalRevenue = 0;
+        long subtotal = 0;
+        long tax = 0;
         int totalOrders = 0;
-        List<Map<String, Object>> byStation = new ArrayList<>();
+        List<Map<String, Object>> byStream = new ArrayList<>();
 
-        for (Object[] row : stationData) {
-            String station = (String) row[0];
+        for (Object[] row : streamData) {
+            String stream = (String) row[0];
             long count = ((Number) row[1]).longValue();
-            long revenue = ((Number) row[2]).longValue();
-            totalRevenue += revenue;
+            long rowSubtotal = ((Number) row[2]).longValue();
+            long rowTax = ((Number) row[3]).longValue();
+            subtotal += rowSubtotal;
+            tax += rowTax;
             totalOrders += count;
-            byStation.add(Map.of(
-                    "station", station,
+            byStream.add(Map.of(
+                    "stream", stream,
                     "orderCount", count,
-                    "revenue", revenue
+                    "subtotal", rowSubtotal,
+                    "tax", rowTax,
+                    "total", rowSubtotal + rowTax
             ));
         }
 
@@ -52,16 +57,18 @@ public class AnalyticsService {
                 "count", ((Number) row[1]).longValue()
         )).toList();
 
-        return Map.of(
-                "dayId", dayId,
-                "label", day.getLabel() != null ? day.getLabel() : "",
-                "openedAt", day.getOpenedAt(),
-                "closedAt", day.getClosedAt() != null ? day.getClosedAt() : "",
-                "totalRevenue", totalRevenue,
-                "totalOrders", totalOrders,
-                "byStation", byStation,
-                "hourly", hourly
-        );
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("dayId", dayId);
+        result.put("label", day.getLabel() != null ? day.getLabel() : "");
+        result.put("openedAt", day.getOpenedAt());
+        result.put("closedAt", day.getClosedAt() != null ? day.getClosedAt() : "");
+        result.put("subtotal", subtotal);
+        result.put("tax", tax);
+        result.put("total", subtotal + tax);
+        result.put("totalOrders", totalOrders);
+        result.put("byStream", byStream);
+        result.put("hourly", hourly);
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -78,15 +85,20 @@ public class AnalyticsService {
         return eventDayRepository.findAllOrderByOpenedAtDesc().stream()
                 .map(day -> {
                     List<Object[]> stationData = orderRepository.revenueByStation(day.getId());
-                    long revenue = stationData.stream()
-                            .mapToLong(r -> ((Number) r[2]).longValue()).sum();
-                    long orders = stationData.stream().mapToLong(r -> ((Number) r[1]).longValue()).sum();
+                    long subtotal = 0, tax = 0, orders = 0;
+                    for (Object[] r : stationData) {
+                        orders += ((Number) r[1]).longValue();
+                        subtotal += ((Number) r[2]).longValue();
+                        tax += ((Number) r[3]).longValue();
+                    }
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("dayId", day.getId());
                     m.put("label", day.getLabel() != null ? day.getLabel() : day.getOpenedAt().toString().substring(0, 10));
                     m.put("openedAt", day.getOpenedAt());
                     m.put("closedAt", day.getClosedAt());
-                    m.put("totalRevenue", revenue);
+                    m.put("totalRevenue", subtotal);
+                    m.put("tax", tax);
+                    m.put("grandTotal", subtotal + tax);
                     m.put("totalOrders", orders);
                     return m;
                 }).toList();
