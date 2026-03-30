@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getHistorical, getDaySummary, getComponents, getSnapshot } from '../api/analytics'
 import { formatCAD } from '../utils/formatters'
@@ -70,7 +70,7 @@ export default function Analytics() {
     } else {
       const pos = yearsAfter === 0 ? 4 : yearsAfter === 1 ? 3 : 2
       const start = selYear - pos
-      windowYears = [start, start + 1, start + 2, start + 3, start + 4]
+      windowYears = Array.from({ length: 5 }, (_, i) => start + i)
     }
 
     // Step 4 — fill window, zero for missing years
@@ -275,6 +275,16 @@ function SummaryCard({ label, value }) {
 
 function YearlyLineChart({ title, dataKey, colorIndex, data, selectedYear, formatValue }) {
   const color = COLORS[colorIndex]
+  const renderDot = useCallback((props) => {
+    const { cx, cy, payload } = props
+    const sel = payload.year === selectedYear
+    return <circle key={payload.year} cx={cx} cy={cy}
+      r={sel ? 6 : 4}
+      fill={sel ? HIGHLIGHT : color}
+      stroke={sel ? '#fff' : 'none'}
+      strokeWidth={sel ? 1.5 : 0}
+    />
+  }, [color, selectedYear])
   return (
     <div className="card">
       <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">{title} · {selectedYear}</h2>
@@ -292,16 +302,7 @@ function YearlyLineChart({ title, dataKey, colorIndex, data, selectedYear, forma
             dataKey={dataKey}
             stroke={color}
             strokeWidth={2}
-            dot={(props) => {
-              const { cx, cy, payload } = props
-              const sel = payload.year === selectedYear
-              return <circle key={payload.year} cx={cx} cy={cy}
-                r={sel ? 6 : 4}
-                fill={sel ? HIGHLIGHT : color}
-                stroke={sel ? '#fff' : 'none'}
-                strokeWidth={sel ? 1.5 : 0}
-              />
-            }}
+            dot={renderDot}
             activeDot={{ r: 6 }}
           />
         </LineChart>

@@ -60,7 +60,7 @@ export function useWebSocket() {
     const client = new Client({
       webSocketFactory: () => {
         try {
-          return new SockJS('/ws')
+          return new SockJS(import.meta.env.VITE_WS_URL || '/ws')
         } catch (err) {
           console.error('Failed to create SockJS connection', err)
           throw err
