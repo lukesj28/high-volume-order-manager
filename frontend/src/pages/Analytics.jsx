@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 
 const COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4']
+const HIGHLIGHT = COLORS[1]
 const AXIS_TICK = { fill: '#71717a', fontSize: 11, fontFamily: 'monospace' }
 const TOOLTIP_STYLE = { background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8, color: '#f4f4f5' }
 
@@ -43,15 +44,44 @@ export default function Analytics() {
     enabled: !!activeDayId && !!activeDayClosedAt
   })
 
-  const yearlyData = useMemo(() => Object.values(
-    historical.reduce((acc, d) => {
+  const { yearlyData, selectedYear } = useMemo(() => {
+    // Step 1 — aggregate all years, capture active day's openedAt in one pass
+    const { allYearsMap, activeDayOpenedAt } = historical.reduce((acc, d) => {
       const year = new Date(d.openedAt).getFullYear()
-      if (!acc[year]) acc[year] = { year, revenue: 0, orders: 0 }
-      acc[year].revenue += d.grandTotal
-      acc[year].orders += d.totalOrders
+      if (!acc.allYearsMap[year]) acc.allYearsMap[year] = { revenue: 0, orders: 0 }
+      acc.allYearsMap[year].revenue += d.grandTotal
+      acc.allYearsMap[year].orders += d.totalOrders
+      if (d.dayId === activeDayId) acc.activeDayOpenedAt = d.openedAt
       return acc
-    }, {})
-  ).sort((a, b) => a.year - b.year).slice(-5), [historical])
+    }, { allYearsMap: {}, activeDayOpenedAt: null })
+    const distinctYears = Object.keys(allYearsMap).map(Number).sort((a, b) => a - b)
+
+    // Step 2 — derive selectedYear from active day
+    const selYear = new Date(activeDayOpenedAt ?? Date.now()).getFullYear()
+
+    // Step 3 — determine 5-year window
+    if (distinctYears.length === 0) return { yearlyData: [], selectedYear: selYear }
+    const minYear = distinctYears[0]
+    const maxYear = distinctYears[distinctYears.length - 1]
+    const yearsAfter = Math.max(0, maxYear - selYear)
+    let windowYears
+    if (maxYear - minYear <= 4) {
+      windowYears = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
+    } else {
+      const pos = yearsAfter === 0 ? 4 : yearsAfter === 1 ? 3 : 2
+      const start = selYear - pos
+      windowYears = [start, start + 1, start + 2, start + 3, start + 4]
+    }
+
+    // Step 4 — fill window, zero for missing years
+    const data = windowYears.map(y => ({
+      year: y,
+      revenue: allYearsMap[y]?.revenue ?? 0,
+      orders: allYearsMap[y]?.orders ?? 0,
+    }))
+
+    return { yearlyData: data, selectedYear: selYear }
+  }, [historical, activeDayId])
 
   return (
     <div className="h-full overflow-y-auto space-y-6">
@@ -91,6 +121,7 @@ export default function Analytics() {
             dataKey="revenue"
             colorIndex={0}
             data={yearlyData}
+            selectedYear={selectedYear}
             formatValue={v => formatCAD(v).replace('.00', '')}
           />
           <YearlyLineChart
@@ -98,6 +129,7 @@ export default function Analytics() {
             dataKey="orders"
             colorIndex={2}
             data={yearlyData}
+            selectedYear={selectedYear}
           />
         </div>
       )}
@@ -241,11 +273,11 @@ function SummaryCard({ label, value }) {
   )
 }
 
-function YearlyLineChart({ title, dataKey, colorIndex, data, formatValue }) {
+function YearlyLineChart({ title, dataKey, colorIndex, data, selectedYear, formatValue }) {
   const color = COLORS[colorIndex]
   return (
     <div className="card">
-      <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">{title}</h2>
+      <h2 className="text-xs uppercase font-bold tracking-wider text-zinc-400 mb-4 border-b border-zinc-800/80 pb-2">{title} · {selectedYear}</h2>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data}>
           <XAxis dataKey="year" stroke="#71717a" tick={AXIS_TICK} />
@@ -255,7 +287,23 @@ function YearlyLineChart({ title, dataKey, colorIndex, data, formatValue }) {
             formatter={formatValue}
             labelFormatter={year => `Year: ${year}`}
           />
-          <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={{ fill: color, r: 4 }} />
+          <Line
+            type="linear"
+            dataKey={dataKey}
+            stroke={color}
+            strokeWidth={2}
+            dot={(props) => {
+              const { cx, cy, payload } = props
+              const sel = payload.year === selectedYear
+              return <circle key={payload.year} cx={cx} cy={cy}
+                r={sel ? 6 : 4}
+                fill={sel ? HIGHLIGHT : color}
+                stroke={sel ? '#fff' : 'none'}
+                strokeWidth={sel ? 1.5 : 0}
+              />
+            }}
+            activeDot={{ r: 6 }}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>
