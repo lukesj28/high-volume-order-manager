@@ -63,7 +63,20 @@ public class AuthService {
     public void changeStaffPassword(String newPassword) {
         User staff = userRepository.findFirstByRole(User.Role.STAFF)
                 .orElseThrow(() -> AppException.notFound("Staff account not found"));
-        staff.setPasswordHash(passwordEncoder.encode(newPassword));
-        userRepository.save(staff);
+        updateUserPassword(staff, newPassword);
+    }
+
+    @Transactional
+    public void changeAdminPassword(String currentPassword, String newPassword) {
+        User admin = userRepository.findFirstByRole(User.Role.ADMIN)
+                .orElseThrow(() -> AppException.notFound("Admin account not found"));
+        if (currentPassword == null || !passwordEncoder.matches(currentPassword, admin.getPasswordHash()))
+            throw AppException.forbidden("Current password is incorrect");
+        updateUserPassword(admin, newPassword);
+    }
+
+    private void updateUserPassword(User user, String newPassword) {
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

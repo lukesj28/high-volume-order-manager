@@ -14,3 +14,6 @@ export const deleteStationProfile = (id) =>
 
 export const changeStaffPassword = (password) =>
   client.put('/admin/staff-password', { password })
+
+export const changeAdminPassword = (currentPassword, password) =>
+  client.put('/admin/admin-password', { currentPassword, password })

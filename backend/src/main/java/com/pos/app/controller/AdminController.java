@@ -83,6 +83,16 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/admin-password")
+    public ResponseEntity<Void> changeAdminPassword(@RequestBody Map<String, String> body) {
+        String currentPassword = body.get("currentPassword");
+        String password = body.get("password");
+        if (password == null || password.length() < 6)
+            throw AppException.badRequest("Password must be at least 6 characters");
+        authService.changeAdminPassword(currentPassword, password);
+        return ResponseEntity.noContent().build();
+    }
+
     private void applyDto(StationProfile sp, StationProfileDto dto) {
         sp.setName(dto.name());
         sp.setCanSubmit(dto.canSubmit());
