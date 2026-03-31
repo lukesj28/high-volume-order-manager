@@ -23,7 +23,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       <header className="bg-black border-b border-zinc-800 px-3 py-1.5 flex items-center gap-4 flex-wrap">
         <button
           onClick={() => navigate('/select-station')}
