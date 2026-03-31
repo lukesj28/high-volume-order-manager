@@ -22,7 +22,8 @@ public record OrderResponse(
         Instant syncedAt,
         Instant completedAt,
         List<OrderItemResponse> items,
-        String type // ORDER_CREATED | ORDER_UPDATED
+        String type, // ORDER_CREATED | ORDER_UPDATED
+        String editSnapshot
 ) {
     public record OrderItemResponse(
             UUID id,
@@ -58,7 +59,8 @@ public record OrderResponse(
                 order.getSyncedAt(),
                 order.getCompletedAt(),
                 items,
-                type
+                type,
+                order.getEditSnapshot()
         );
     }
 }

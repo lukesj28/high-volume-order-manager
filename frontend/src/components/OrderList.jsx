@@ -38,7 +38,7 @@ function groupBySlot(orders, intervalMinutes) {
     .map(k => ({ slotMinutes: k, orders: slotted[k] }))
 }
 
-function SlottedOrders({ orders, intervalMinutes }) {
+function SlottedOrders({ orders, intervalMinutes, onEdit }) {
   const slots = groupBySlot(orders, intervalMinutes)
   return (
     <div className="space-y-3">
@@ -51,7 +51,7 @@ function SlottedOrders({ orders, intervalMinutes }) {
           <div className="space-y-1.5">
             {slotOrders.map(order => (
               <CardErrorBoundary key={order.id}>
-                <OrderCard order={order} />
+                <OrderCard order={order} onEdit={onEdit} />
               </CardErrorBoundary>
             ))}
           </div>
@@ -61,7 +61,7 @@ function SlottedOrders({ orders, intervalMinutes }) {
   )
 }
 
-export default function OrderList({ overrideShowAll = false, stationNames = null }) {
+export default function OrderList({ overrideShowAll = false, stationNames = null, onEdit = null }) {
   const stationProfile = useAuthStore(s => s.stationProfile)
   const ordersMap = useOrdersStore(s => s.orders)
   const activeDay = useDayStore(s => s.activeDay)
@@ -117,12 +117,12 @@ export default function OrderList({ overrideShowAll = false, stationNames = null
                   Show {groupOrders.length} completed
                 </summary>
                 <div className="mt-2">
-                  <SlottedOrders orders={groupOrders} intervalMinutes={intervalMinutes} />
+                  <SlottedOrders orders={groupOrders} intervalMinutes={intervalMinutes} onEdit={onEdit} />
                 </div>
               </details>
             ) : (
               <>
-                <SlottedOrders orders={groupOrders} intervalMinutes={intervalMinutes} />
+                <SlottedOrders orders={groupOrders} intervalMinutes={intervalMinutes} onEdit={onEdit} />
                 {groupOrders.length === 0 && (
                   <p className="text-zinc-500 text-sm font-medium">No active orders</p>
                 )}

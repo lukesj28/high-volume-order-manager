@@ -54,6 +54,9 @@ public class PosOrder {
     private Instant syncedAt = Instant.now();
     private Instant completedAt;
 
+    @Column(columnDefinition = "text")
+    private String editSnapshot; // JSON snapshot of state before last edit
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<OrderItem> items = new ArrayList<>();

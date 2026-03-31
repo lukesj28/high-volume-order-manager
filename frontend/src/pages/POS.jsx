@@ -1,15 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getMenu } from '../api/menu'
-import { submitOrder } from '../api/orders'
+import { submitOrder, updateOrder } from '../api/orders'
 import { useAuthStore } from '../store/authStore'
 import { useOrdersStore } from '../store/ordersStore'
 import { useDayStore } from '../store/dayStore'
 import { useOfflineQueue } from '../hooks/useOfflineQueue'
-import { formatCAD, calcTax } from '../utils/formatters'
+import { formatCAD, calcTax, timeValueToISOToday, APP_OPTIONS } from '../utils/formatters'
 import OrderList from '../components/OrderList'
-
-const APP_OPTIONS = ['Uber Eats', 'DoorDash', 'SkipTheDishes', 'Ritual']
+import EditOrderModal from '../components/EditOrderModal'
 
 function ItemButton({ item, qty, onSet }) {
   const [editing, setEditing] = useState(false)
@@ -69,13 +68,6 @@ function ItemButton({ item, qty, onSet }) {
 function defaultPickupTimeValue(offsetMinutes) {
   const d = new Date(Date.now() + offsetMinutes * 60000)
   return d.toTimeString().slice(0, 5) // "HH:MM"
-}
-
-function timeValueToISOToday(timeValue) {
-  const [h, m] = timeValue.split(':').map(Number)
-  const d = new Date()
-  d.setHours(h, m, 0, 0)
-  return d.toISOString()
 }
 
 function defaultPickupISO(offsetMinutes) {
@@ -180,7 +172,7 @@ function SubmitModal({ submitFields, streamOptions, defaultPickupOffset, onConfi
   )
 }
 
-function StreamColumn({ stream }) {
+function StreamColumn({ stream, onEdit }) {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {stream.label && (
@@ -189,7 +181,7 @@ function StreamColumn({ stream }) {
         </h2>
       )}
       <div className="flex-1 overflow-y-auto pr-1">
-        <OrderList stationNames={stream.stationNames} />
+        <OrderList stationNames={stream.stationNames} onEdit={onEdit} />
       </div>
     </div>
   )
@@ -283,6 +275,7 @@ export default function POS() {
   const [cart, setCart] = useState({})
   const [showModal, setShowModal] = useState(false)
   const [lastSubmitted, setLastSubmitted] = useState(null)
+  const [editingOrder, setEditingOrder] = useState(null)
   const submitTimerRef = useRef(null)
   useEffect(() => () => clearTimeout(submitTimerRef.current), [])
 
@@ -307,6 +300,13 @@ export default function POS() {
       return { ...prev, [itemId]: qty }
     })
   }
+
+  const editMutation = useMutation({
+    mutationFn: ({ id, ...data }) => updateOrder(id, data),
+    onSuccess: (updated) => { upsertOrder(updated); setEditingOrder(null) }
+  })
+
+  const onEdit = stationProfile?.canSubmit ? setEditingOrder : null
 
   const mutation = useMutation({
     mutationFn: async (order) => {
@@ -372,7 +372,7 @@ export default function POS() {
   if (!canSubmit) {
     return (
       <div className="h-full flex gap-4">
-        {streams.map((stream, i) => <StreamColumn key={i} stream={stream} />)}
+        {streams.map((stream, i) => <StreamColumn key={i} stream={stream} onEdit={onEdit} />)}
       </div>
     )
   }
@@ -397,7 +397,7 @@ export default function POS() {
               </h2>
             )}
             <div className="flex-1 overflow-y-auto pr-1">
-              <OrderList stationNames={streams[0].stationNames} />
+              <OrderList stationNames={streams[0].stationNames} onEdit={onEdit} />
             </div>
           </div>
         </div>
@@ -411,6 +411,15 @@ export default function POS() {
             onCancel={() => setShowModal(false)}
           />
         )}
+        {editingOrder && (
+          <EditOrderModal
+            order={editingOrder}
+            menu={menu}
+            streamOptions={streamOptions}
+            onSave={data => editMutation.mutate({ id: editingOrder.id, ...data })}
+            onCancel={() => setEditingOrder(null)}
+          />
+        )}
       </>
     )
   }
@@ -419,7 +428,7 @@ export default function POS() {
     <>
       <div className="h-full flex flex-col">
         <div className="flex-[4] flex gap-4 min-h-0 overflow-hidden pb-3">
-          {streams.map((stream, i) => <StreamColumn key={i} stream={stream} />)}
+          {streams.map((stream, i) => <StreamColumn key={i} stream={stream} onEdit={onEdit} />)}
         </div>
 
         <div className="border-t border-zinc-800 flex-shrink-0" />
@@ -441,6 +450,15 @@ export default function POS() {
           defaultPickupOffset={defaultPickupOffset}
           onConfirm={details => { setShowModal(false); doSubmit(details) }}
           onCancel={() => setShowModal(false)}
+        />
+      )}
+      {editingOrder && (
+        <EditOrderModal
+          order={editingOrder}
+          menu={menu}
+          streamOptions={streamOptions}
+          onSave={data => editMutation.mutate(data)}
+          onCancel={() => setEditingOrder(null)}
         />
       )}
     </>
