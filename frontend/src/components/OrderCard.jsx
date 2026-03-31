@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useMemo, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { updateStatus } from '../api/orders'
 import { useOrdersStore } from '../store/ordersStore'
@@ -16,10 +16,45 @@ const STATUS_STYLE = {
   COMPLETED:   'border-l-zinc-600 bg-zinc-900/50 border-r border-t border-b border-zinc-800 opacity-60',
 }
 
-export default function OrderCard({ order }) {
+function EditDiff({ order }) {
+  const prev = useMemo(() => {
+    if (!order.editSnapshot) return null
+    try { return JSON.parse(order.editSnapshot) } catch { return null }
+  }, [order.editSnapshot])
+
+  if (!prev) return null
+
+  const diffs = []
+  if (prev.pickupTime !== order.pickupTime)
+    diffs.push(`${formatTime(prev.pickupTime)} → ${formatTime(order.pickupTime)}`)
+
+  prev.items?.forEach(pi => {
+    const cur = order.items.find(i => i.menuItemName === pi.menuItemName)
+    const newQty = cur?.quantity ?? 0
+    if (pi.quantity !== newQty)
+      diffs.push(`${pi.menuItemName} ${pi.quantity}→${newQty === 0 ? 'removed' : newQty}`)
+  })
+  order.items.forEach(ci => {
+    if (!prev.items?.find(pi => pi.menuItemName === ci.menuItemName))
+      diffs.push(`+${ci.quantity}× ${ci.menuItemName}`)
+  })
+  if (prev.pickupName !== order.pickupName)
+    diffs.push(`name: ${prev.pickupName ?? '—'} → ${order.pickupName ?? '—'}`)
+
+  if (diffs.length === 0) return null
+  return (
+    <p className="text-xs text-amber-400/70 font-medium mt-1">✎ {diffs.join(', ')}</p>
+  )
+}
+
+export default function OrderCard({ order, onEdit }) {
   const stationProfile = useAuthStore(s => s.stationProfile)
   const upsertOrder = useOrdersStore(s => s.upsertOrder)
   const [confirming, setConfirming] = useState(false)
+
+  const longPressRef = useRef(null)
+  const didLongPress = useRef(false)
+  useEffect(() => () => clearTimeout(longPressRef.current), [])
 
   const mutation = useMutation({
     mutationFn: ({ status, confirmed }) => updateStatus(order.id, status, confirmed),
@@ -46,13 +81,27 @@ export default function OrderCard({ order }) {
     setConfirming(false)
   }
 
+  const startLongPress = () => {
+    if (!onEdit || order.status === 'COMPLETED') return
+    didLongPress.current = false
+    longPressRef.current = setTimeout(() => {
+      didLongPress.current = true
+      onEdit(order)
+    }, 500)
+  }
+
+  const cancelLongPress = () => clearTimeout(longPressRef.current)
+
   const isActionable = !!nextState && !mutation.isPending
   const taxAmount = calcTax(order.totalPrice, order.taxRateBps)
 
   return (
     <>
       <div
-        onClick={handleTap}
+        onPointerDown={startLongPress}
+        onPointerUp={() => { cancelLongPress(); if (!didLongPress.current) handleTap() }}
+        onPointerLeave={cancelLongPress}
+        onContextMenu={e => e.preventDefault()}
         className={`border-l-[3px] rounded-r-xl px-4 py-3 space-y-2 transition-all shadow-sm
           ${STATUS_STYLE[order.status] ?? 'border-l-zinc-600 bg-zinc-900'}
           ${isActionable ? 'cursor-pointer hover:brightness-110 active:scale-[0.99]' : ''}
@@ -90,6 +139,8 @@ export default function OrderCard({ order }) {
             </li>
           ))}
         </ul>
+
+        <EditDiff order={order} />
 
         <div className="flex justify-end items-baseline gap-2 pt-1">
           <span className="text-xs font-mono text-zinc-600">+{formatCAD(taxAmount)} tax</span>

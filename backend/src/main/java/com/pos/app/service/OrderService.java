@@ -1,7 +1,10 @@
 package com.pos.app.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pos.app.dto.OrderRequest;
 import com.pos.app.dto.OrderResponse;
+import com.pos.app.dto.OrderUpdateRequest;
 import com.pos.app.dto.StatusUpdateRequest;
 import com.pos.app.entity.*;
 import com.pos.app.exception.AppException;
@@ -30,6 +33,7 @@ public class OrderService {
     private final StationProfileRepository stationProfileRepository;
     private final MenuItemRepository menuItemRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public OrderResponse submitOrder(OrderRequest request, UUID stationProfileId) {
@@ -163,6 +167,75 @@ public class OrderService {
             return PosOrder.OrderStatus.valueOf(s.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw AppException.badRequest("Invalid status: " + s);
+        }
+    }
+
+    @Transactional
+    public OrderResponse updateOrder(UUID orderId, OrderUpdateRequest request, UUID stationProfileId) {
+        StationProfile station = stationProfileRepository.findById(stationProfileId)
+                .orElseThrow(() -> AppException.notFound("Station profile not found"));
+        if (!station.isCanSubmit())
+            throw AppException.forbidden("This station cannot edit orders");
+
+        PosOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> AppException.notFound("Order not found"));
+        if (order.getStatus() == PosOrder.OrderStatus.COMPLETED)
+            throw AppException.badRequest("Completed orders cannot be edited");
+
+        order.setEditSnapshot(buildSnapshot(order));
+
+        order.getItems().clear();
+        int total = 0;
+        for (OrderUpdateRequest.ItemRequest itemReq : request.items()) {
+            MenuItem menuItem = menuItemRepository.findById(itemReq.menuItemId())
+                    .orElseThrow(() -> AppException.notFound("Menu item not found: " + itemReq.menuItemId()));
+            OrderItem oi = new OrderItem();
+            oi.setOrder(order);
+            oi.setMenuItem(menuItem);
+            oi.setQuantity(itemReq.quantity());
+            oi.setUnitPrice(menuItem.getPrice());
+            order.getItems().add(oi);
+            total += menuItem.getPrice() * itemReq.quantity();
+        }
+
+        order.setTotalPrice(total);
+        order.setPickupName(request.pickupName());
+        order.setSourceApp(request.sourceApp());
+        order.setTargetStationName(request.targetStation());
+        if (request.pickupTime() != null) order.setPickupTime(request.pickupTime());
+        order.setSyncedAt(Instant.now());
+
+        if (order.getStatus() == PosOrder.OrderStatus.IN_PROGRESS) {
+            order.setStatus(PosOrder.OrderStatus.PENDING);
+        }
+
+        PosOrder saved = orderRepository.save(order);
+        OrderResponse response = OrderResponse.from(saved, "ORDER_UPDATED");
+        broadcast(response);
+        return response;
+    }
+
+    private String buildSnapshot(PosOrder order) {
+        record SnapshotItem(String menuItemName, int quantity) {}
+        record Snapshot(
+                String pickupTime, String pickupName, String sourceApp,
+                String targetStationName, List<SnapshotItem> items
+        ) {}
+        List<SnapshotItem> items = order.getItems().stream()
+                .map(i -> new SnapshotItem(i.getMenuItem().getName(), i.getQuantity()))
+                .toList();
+        Snapshot snapshot = new Snapshot(
+                order.getPickupTime().toString(),
+                order.getPickupName(),
+                order.getSourceApp(),
+                order.getTargetStationName(),
+                items
+        );
+        try {
+            return objectMapper.writeValueAsString(snapshot);
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize edit snapshot for order {}", order.getId(), e);
+            return null;
         }
     }
 

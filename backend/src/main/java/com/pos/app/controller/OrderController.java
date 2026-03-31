@@ -2,6 +2,7 @@ package com.pos.app.controller;
 
 import com.pos.app.dto.OrderRequest;
 import com.pos.app.dto.OrderResponse;
+import com.pos.app.dto.OrderUpdateRequest;
 import com.pos.app.dto.StatusUpdateRequest;
 import com.pos.app.entity.EventDay;
 import com.pos.app.entity.StationProfile;
@@ -35,6 +36,15 @@ public class OrderController {
             @Valid @RequestBody OrderRequest request) {
         UUID stationId = requireStation(user);
         return ResponseEntity.ok(orderService.submitOrder(request, stationId));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<OrderResponse> updateOrder(
+            @AuthenticationPrincipal PosUserDetails user,
+            @PathVariable UUID id,
+            @Valid @RequestBody OrderUpdateRequest body) {
+        UUID stationId = requireStation(user);
+        return ResponseEntity.ok(orderService.updateOrder(id, body, stationId));
     }
 
     @PatchMapping("/{id}/status")

@@ -11,3 +11,18 @@ export const formatDate = (iso) =>
 
 export const formatDateTime = (iso) =>
   iso ? `${formatDate(iso)} ${formatTime(iso)}` : ''
+
+export const timeValueToISOToday = (timeValue) => {
+  const [h, m] = timeValue.split(':').map(Number)
+  const d = new Date()
+  d.setHours(h, m, 0, 0)
+  return d.toISOString()
+}
+
+export const isoToTimeValue = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+export const APP_OPTIONS = ['Uber Eats', 'DoorDash', 'SkipTheDishes', 'Ritual']

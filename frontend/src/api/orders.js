@@ -11,3 +11,6 @@ export const getActiveOrders = () =>
 
 export const getAllOrders = () =>
   client.get('/orders/all').then(r => r.data)
+
+export const updateOrder = (id, data) =>
+  client.put(`/orders/${id}`, data).then(r => r.data)
