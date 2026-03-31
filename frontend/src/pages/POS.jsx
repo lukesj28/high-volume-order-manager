@@ -78,6 +78,12 @@ function timeValueToISOToday(timeValue) {
   return d.toISOString()
 }
 
+function defaultPickupISO(offsetMinutes) {
+  const d = new Date(Date.now() + offsetMinutes * 60000)
+  d.setSeconds(0, 0)
+  return d.toISOString()
+}
+
 function SubmitModal({ submitFields, streamOptions, defaultPickupOffset, onConfirm, onCancel }) {
   const [name, setName] = useState('')
   const [app, setApp] = useState('')
@@ -88,7 +94,7 @@ function SubmitModal({ submitFields, streamOptions, defaultPickupOffset, onConfi
     onConfirm({
       pickupName: name.trim() || null,
       sourceApp: app || null,
-      pickupTime: timeValueToISOToday(pickupTime),
+      pickupTime: submitFields.includes('pickupTime') ? timeValueToISOToday(pickupTime) : defaultPickupISO(defaultPickupOffset),
       targetStation: stream,
     })
   }
@@ -98,17 +104,19 @@ function SubmitModal({ submitFields, streamOptions, defaultPickupOffset, onConfi
       <div className="bg-zinc-900 border border-zinc-800/80 rounded-2xl p-6 w-80 space-y-4 shadow-xl">
         <h3 className="font-bold text-white text-base tracking-wide">Order Details</h3>
 
-        <div>
-          <label className="label">Pickup Time</label>
-          <input
-            autoFocus
-            type="time"
-            className="input w-full"
-            value={pickupTime}
-            onChange={e => setPickupTime(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleConfirm()}
-          />
-        </div>
+        {submitFields.includes('pickupTime') && (
+          <div>
+            <label className="label">Pickup Time</label>
+            <input
+              autoFocus
+              type="time"
+              className="input w-full"
+              value={pickupTime}
+              onChange={e => setPickupTime(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+            />
+          </div>
+        )}
 
         {submitFields.includes('name') && (
           <div>
@@ -327,7 +335,11 @@ export default function POS() {
 
   const handleSubmitClick = () => {
     if (itemCount === 0) return
-    setShowModal(true)
+    if (submitFields.length === 0) {
+      doSubmit({ pickupTime: defaultPickupISO(defaultPickupOffset) })
+    } else {
+      setShowModal(true)
+    }
   }
 
   const previewProps = {
