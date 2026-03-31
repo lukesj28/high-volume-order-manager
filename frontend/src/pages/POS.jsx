@@ -205,6 +205,7 @@ function CartItemsList({ cartItems, className }) {
 
 function CartActions({ subtotal, taxAmount, itemCount, isPending, lastSubmitted, isError, errorMsg, onSubmit, onClear, alwaysShowClear = true }) {
   const total = subtotal + taxAmount
+  const statusCls = 'text-xs text-center py-1 border border-transparent'
   return (
     <>
       <div className="space-y-0.5 mb-3">
@@ -228,18 +229,16 @@ function CartActions({ subtotal, taxAmount, itemCount, isPending, lastSubmitted,
       >
         {isPending ? 'Submitting…' : 'Submit'}
       </button>
-      {(alwaysShowClear || itemCount > 0) && (
-        <button
-          className="btn-ghost w-full text-xs py-1"
-          disabled={alwaysShowClear && itemCount === 0}
-          onClick={onClear}
-        >
-          Clear
-        </button>
-      )}
-      {lastSubmitted === 'queued' && <p className="text-amber-400 text-xs text-center">Saved offline</p>}
-      {lastSubmitted === 'sent' && <p className="text-green-400 text-xs text-center">Submitted!</p>}
-      {isError && <p className="text-red-400 text-xs text-center">{errorMsg ?? 'Failed'}</p>}
+      {lastSubmitted === 'queued'
+        ? <p className={`text-amber-400 ${statusCls}`}>Saved offline</p>
+        : lastSubmitted === 'sent'
+        ? <p className={`text-green-400 ${statusCls}`}>Submitted!</p>
+        : isError
+        ? <p className={`text-red-400 ${statusCls}`}>{errorMsg ?? 'Failed'}</p>
+        : (alwaysShowClear || itemCount > 0)
+        ? <button className="btn-ghost w-full text-xs py-1" disabled={alwaysShowClear && itemCount === 0} onClick={onClear}>Clear</button>
+        : null
+      }
     </>
   )
 }
@@ -354,13 +353,6 @@ export default function POS() {
 
   const itemGrid = (
     <div className="flex flex-col gap-2 h-full">
-      {itemCount > 0 && (
-        <div className="flex justify-end flex-shrink-0">
-          <button className="btn-ghost text-xs py-0.5 px-2" onClick={() => setCart({})}>
-            Clear all
-          </button>
-        </div>
-      )}
       <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))' }}>
         {menu.map(item => (
           <ItemButton key={item.id} item={item} qty={cart[item.id] ?? 0} onSet={qty => setItemQty(item.id, qty)} />
