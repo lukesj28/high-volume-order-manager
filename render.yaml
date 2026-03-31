@@ -13,8 +13,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        # Set this to your Vercel frontend URL after first deploy (e.g. https://your-app.vercel.app)
-        value: "https://your-app.vercel.app"
+        value: "https://high-volume-order-manager-kwi1.vercel.app"
     healthCheckPath: /actuator/health/liveness
 
 databases:
